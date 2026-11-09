@@ -3,8 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:servis/core/widgets/confirmation_dialog.dart';
 
 void main() {
-  testWidgets('ConfirmationDialog displays prompt and triggers onConfirm',
-      (WidgetTester tester) async {
+  testWidgets('ConfirmationDialog displays prompt and triggers onConfirm', (
+    WidgetTester tester,
+  ) async {
     bool confirmed = false;
 
     await tester.pumpWidget(

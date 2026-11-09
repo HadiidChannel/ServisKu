@@ -14,7 +14,8 @@ class MaintenanceCalculationResult {
   final String? kmReason;
   final String? dateReason;
   final double progress; // 0.0 to 1.0 (clamped for UI progress bars)
-  final double unclampedProgress; // Unclamped ratio for accurate urgency ordering
+  final double
+  unclampedProgress; // Unclamped ratio for accurate urgency ordering
 
   const MaintenanceCalculationResult({
     required this.overallStatus,
@@ -100,13 +101,16 @@ class MaintenanceCalculator {
             .toDateOnly();
         remainingDays = dueDate.difference(now).inDays;
         final leadDays = schedule.reminderLeadDays ?? 0;
-        final reminderDate =
-            dueDate.subtract(Duration(days: leadDays)).toDateOnly();
+        final reminderDate = dueDate
+            .subtract(Duration(days: leadDays))
+            .toDateOnly();
 
-        final totalCycleDays =
-            dueDate.difference(schedule.lastDoneDate!.toDateOnly()).inDays;
-        final elapsedDays =
-            now.difference(schedule.lastDoneDate!.toDateOnly()).inDays;
+        final totalCycleDays = dueDate
+            .difference(schedule.lastDoneDate!.toDateOnly())
+            .inDays;
+        final elapsedDays = now
+            .difference(schedule.lastDoneDate!.toDateOnly())
+            .inDays;
         if (totalCycleDays > 0) {
           rawDateProgress = elapsedDays / totalCycleDays;
           dateProgress = rawDateProgress.clamp(0.0, 1.0);
@@ -138,7 +142,8 @@ class MaintenanceCalculator {
     MaintenanceStatus finalStatus;
     final reasons = <String>[];
 
-    final isAnyOverdue = kmStatus == MaintenanceStatus.terlambat ||
+    final isAnyOverdue =
+        kmStatus == MaintenanceStatus.terlambat ||
         dateStatus == MaintenanceStatus.terlambat;
 
     if (isAnyOverdue) {
@@ -171,7 +176,8 @@ class MaintenanceCalculator {
       finalStatus = MaintenanceStatus.aman;
       if (remainingKm != null && remainingDays != null) {
         reasons.add(
-            'Sisa ${AppFormatters.formatNumber(remainingKm)} km atau $remainingDays hari');
+          'Sisa ${AppFormatters.formatNumber(remainingKm)} km atau $remainingDays hari',
+        );
       } else if (remainingKm != null) {
         reasons.add('Sisa ${AppFormatters.formatNumber(remainingKm)} km');
       } else if (remainingDays != null) {
@@ -181,16 +187,18 @@ class MaintenanceCalculator {
       }
     }
 
-    final overallProgress =
-        (kmProgress > dateProgress ? kmProgress : dateProgress);
+    final overallProgress = (kmProgress > dateProgress
+        ? kmProgress
+        : dateProgress);
 
     double overallUnclamped = 0.0;
     if (hasKm &&
         hasMonths &&
         schedule.lastDoneKm != null &&
         schedule.lastDoneDate != null) {
-      overallUnclamped =
-          rawKmProgress > rawDateProgress ? rawKmProgress : rawDateProgress;
+      overallUnclamped = rawKmProgress > rawDateProgress
+          ? rawKmProgress
+          : rawDateProgress;
     } else if (hasKm && schedule.lastDoneKm != null) {
       overallUnclamped = rawKmProgress;
     } else if (hasMonths && schedule.lastDoneDate != null) {

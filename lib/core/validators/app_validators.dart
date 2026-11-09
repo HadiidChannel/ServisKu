@@ -40,12 +40,16 @@ class AppValidators {
       final currentYear = DateTime.now().year;
       if (manufactureYear < 1950 || manufactureYear > currentYear) {
         throw const ValidationException(
-            'VEH-003', 'Periksa kembali tahun produksi.');
+          'VEH-003',
+          'Periksa kembali tahun produksi.',
+        );
       }
     }
     if (currentOdometer != null && currentOdometer < 0) {
       throw const ValidationException(
-          'ODO-001', 'Masukkan kilometer yang valid.');
+        'ODO-001',
+        'Masukkan kilometer yang valid.',
+      );
     }
   }
 
@@ -58,13 +62,17 @@ class AppValidators {
   }) {
     if (odometerKm < 0) {
       throw const ValidationException(
-          'ODO-001', 'Masukkan kilometer yang valid.');
+        'ODO-001',
+        'Masukkan kilometer yang valid.',
+      );
     }
 
     final today = DateTime.now().toDateOnly();
     if (readingDate.toDateOnly().isAfter(today)) {
       throw const ValidationException(
-          'ODO-003', 'Tanggal pembacaan tidak boleh di masa depan.');
+        'ODO-003',
+        'Tanggal pembacaan tidak boleh di masa depan.',
+      );
     }
 
     if (latestKm != null && odometerKm < latestKm && !isCorrection) {
@@ -90,19 +98,25 @@ class AppValidators {
   }) {
     if (odometerKm < 0) {
       throw const ValidationException(
-          'ODO-001', 'Masukkan kilometer yang valid.');
+        'ODO-001',
+        'Masukkan kilometer yang valid.',
+      );
     }
 
     final today = DateTime.now().toDateOnly();
     if (readingDate.toDateOnly().isAfter(today)) {
       throw const ValidationException(
-          'ODO-003', 'Tanggal pembacaan tidak boleh di masa depan.');
+        'ODO-003',
+        'Tanggal pembacaan tidak boleh di masa depan.',
+      );
     }
 
     if (isCorrection) {
       if (correctionReason == null || correctionReason.trim().isEmpty) {
         throw const ValidationException(
-            'ODO-004', 'Alasan koreksi wajib diisi.');
+          'ODO-004',
+          'Alasan koreksi wajib diisi.',
+        );
       }
       return;
     }
@@ -123,10 +137,12 @@ class AppValidators {
 
     for (final entry in readingsByDate.entries) {
       final itemDate = entry.key;
-      final maxKmOnDate =
-          entry.value.map((r) => r.odometerKm).reduce((a, b) => a > b ? a : b);
-      final minKmOnDate =
-          entry.value.map((r) => r.odometerKm).reduce((a, b) => a < b ? a : b);
+      final maxKmOnDate = entry.value
+          .map((r) => r.odometerKm)
+          .reduce((a, b) => a > b ? a : b);
+      final minKmOnDate = entry.value
+          .map((r) => r.odometerKm)
+          .reduce((a, b) => a < b ? a : b);
 
       if (itemDate == targetDate) {
         if (odometerKm < maxKmOnDate) {
@@ -178,35 +194,47 @@ class AppValidators {
 
     if (hasKm && intervalKm <= 0) {
       throw const ValidationException(
-          'MNT-002', 'Interval kilometer harus lebih besar dari nol.');
+        'MNT-002',
+        'Interval kilometer harus lebih besar dari nol.',
+      );
     }
 
     if (hasMonths && intervalMonths <= 0) {
       throw const ValidationException(
-          'MNT-002', 'Interval bulan harus lebih besar dari nol.');
+        'MNT-002',
+        'Interval bulan harus lebih besar dari nol.',
+      );
     }
 
     if (lastDoneKm != null && lastDoneKm < 0) {
       throw const ValidationException(
-          'MNT-005', 'Kilometer terakhir tidak boleh negatif.');
+        'MNT-005',
+        'Kilometer terakhir tidak boleh negatif.',
+      );
     }
 
     if (lastDoneDate != null) {
       final today = DateTime.now().toDateOnly();
       if (lastDoneDate.toDateOnly().isAfter(today)) {
         throw const ValidationException(
-            'MNT-006', 'Tanggal terakhir dilakukan tidak boleh di masa depan.');
+          'MNT-006',
+          'Tanggal terakhir dilakukan tidak boleh di masa depan.',
+        );
       }
     }
 
     if (reminderLeadKm != null && reminderLeadKm < 0) {
       throw const ValidationException(
-          'MNT-007', 'Pengingat kilometer tidak boleh negatif.');
+        'MNT-007',
+        'Pengingat kilometer tidak boleh negatif.',
+      );
     }
 
     if (reminderLeadDays != null && reminderLeadDays < 0) {
       throw const ValidationException(
-          'MNT-008', 'Pengingat hari tidak boleh negatif.');
+        'MNT-008',
+        'Pengingat hari tidak boleh negatif.',
+      );
     }
   }
 
@@ -219,22 +247,30 @@ class AppValidators {
     final today = DateTime.now().toDateOnly();
     if (serviceDate.toDateOnly().isAfter(today)) {
       throw const ValidationException(
-          'SRV-003', 'Tanggal servis tidak boleh berada di masa depan.');
+        'SRV-003',
+        'Tanggal servis tidak boleh berada di masa depan.',
+      );
     }
 
     if (odometerKm < 0) {
       throw const ValidationException(
-          'ODO-001', 'Masukkan kilometer yang valid.');
+        'ODO-001',
+        'Masukkan kilometer yang valid.',
+      );
     }
 
     if (items.isEmpty) {
       throw const ValidationException(
-          'SRV-001', 'Tambahkan minimal satu pekerjaan servis.');
+        'SRV-001',
+        'Tambahkan minimal satu pekerjaan servis.',
+      );
     }
 
     if (additionalCost < 0) {
       throw const ValidationException(
-          'SRV-002', 'Biaya tidak boleh bernilai negatif.');
+        'SRV-002',
+        'Biaya tidak boleh bernilai negatif.',
+      );
     }
 
     final Set<String> linkedScheduleIds = {};
@@ -243,13 +279,17 @@ class AppValidators {
       final name = (item['itemName'] as String?)?.trim() ?? '';
       if (name.isEmpty) {
         throw const ValidationException(
-            'SRV-005', 'Nama pekerjaan servis wajib diisi.');
+          'SRV-005',
+          'Nama pekerjaan servis wajib diisi.',
+        );
       }
 
       final cost = item['itemCost'] as int? ?? 0;
       if (cost < 0) {
         throw const ValidationException(
-            'SRV-002', 'Biaya tidak boleh bernilai negatif.');
+          'SRV-002',
+          'Biaya tidak boleh bernilai negatif.',
+        );
       }
 
       final scheduleId = item['maintenanceScheduleId'] as String?;

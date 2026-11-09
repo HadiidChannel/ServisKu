@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_typography.dart';
 
@@ -47,9 +48,7 @@ class CustomButton extends StatelessWidget {
         backgroundColor: backgroundColor ?? AppColors.primary,
         foregroundColor: textColor ?? Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: _buildChild(context, textColor ?? Colors.white),
     );
@@ -74,10 +73,7 @@ class CustomButton extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: color),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: AppTypography.labelLarge.copyWith(color: color),
-          ),
+          Text(label, style: AppTypography.labelLarge.copyWith(color: color)),
         ],
       );
     }

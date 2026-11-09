@@ -83,10 +83,7 @@ void main() {
   setUp(() {
     db = AppDatabase(NativeDatabase.memory());
     mockNotif = MockNotificationService();
-    reconciler = NotificationReconciler(
-      db: db,
-      notificationService: mockNotif,
-    );
+    reconciler = NotificationReconciler(db: db, notificationService: mockNotif);
     motorcycleRepo = MotorcycleRepository(
       db,
       notificationReconciler: reconciler,
@@ -108,17 +105,23 @@ void main() {
   });
 
   group('Deterministic Notification ID Tests', () {
-    test(
-        'generateNotificationId produces stable deterministic positive 31-bit integer',
-        () {
-      final id1 =
-          NotificationService.generateNotificationId('sched-123', 'date_due');
-      final id2 =
-          NotificationService.generateNotificationId('sched-123', 'date_due');
-      final id3 =
-          NotificationService.generateNotificationId('sched-123', 'km_soon');
-      final id4 =
-          NotificationService.generateNotificationId('sched-456', 'date_due');
+    test('generateNotificationId produces stable deterministic positive 31-bit integer', () {
+      final id1 = NotificationService.generateNotificationId(
+        'sched-123',
+        'date_due',
+      );
+      final id2 = NotificationService.generateNotificationId(
+        'sched-123',
+        'date_due',
+      );
+      final id3 = NotificationService.generateNotificationId(
+        'sched-123',
+        'km_soon',
+      );
+      final id4 = NotificationService.generateNotificationId(
+        'sched-456',
+        'date_due',
+      );
 
       expect(id1, equals(id2));
       expect(id1, isNot(equals(id3)));
@@ -129,9 +132,7 @@ void main() {
   });
 
   group('Notification Reconciliation & Scheduling Tests', () {
-    test(
-        'Schedules future date reminder and creates notification_jobs record with scheduled state',
-        () async {
+    test('Schedules future date reminder and creates notification_jobs record with scheduled state', () async {
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario',
         brand: 'Honda',
@@ -164,39 +165,42 @@ void main() {
     });
 
     test(
-        'Prevents duplicate notification jobs on repeated reconciliation calls',
-        () async {
-      final motorId = await motorcycleRepo.createMotorcycle(
-        nickname: 'Vario',
-        brand: 'Honda',
-        model: 'Vario 160',
-        motorcycleType: AppConstants.typeMatic,
-        initialOdometerKm: 1000,
-      );
+      'Prevents duplicate notification jobs on repeated reconciliation calls',
+      () async {
+        final motorId = await motorcycleRepo.createMotorcycle(
+          nickname: 'Vario',
+          brand: 'Honda',
+          model: 'Vario 160',
+          motorcycleType: AppConstants.typeMatic,
+          initialOdometerKm: 1000,
+        );
 
-      await maintenanceRepo.createSchedule(
-        motorcycleId: motorId,
-        name: 'Busi',
-        intervalMonths: 6,
-        lastDoneDate: DateTime.now(),
-      );
+        await maintenanceRepo.createSchedule(
+          motorcycleId: motorId,
+          name: 'Busi',
+          intervalMonths: 6,
+          lastDoneDate: DateTime.now(),
+        );
 
-      final motor = (await motorcycleRepo.getById(motorId))!;
-      final schedules = await maintenanceRepo.getSchedules(motorId);
+        final motor = (await motorcycleRepo.getById(motorId))!;
+        final schedules = await maintenanceRepo.getSchedules(motorId);
 
-      // Reconcile twice
-      await reconciler.reconcileForMotorcycle(
-          motorcycle: motor, schedules: schedules);
-      await reconciler.reconcileForMotorcycle(
-          motorcycle: motor, schedules: schedules);
+        // Reconcile twice
+        await reconciler.reconcileForMotorcycle(
+          motorcycle: motor,
+          schedules: schedules,
+        );
+        await reconciler.reconcileForMotorcycle(
+          motorcycle: motor,
+          schedules: schedules,
+        );
 
-      final jobs = await db.select(db.notificationJobs).get();
-      expect(jobs.length, 1);
-    });
+        final jobs = await db.select(db.notificationJobs).get();
+        expect(jobs.length, 1);
+      },
+    );
 
-    test(
-        'Records failed state when platform scheduling fails without throwing error',
-        () async {
+    test('Records failed state when platform scheduling fails without throwing error', () async {
       mockNotif.failNextSchedule = true;
 
       final motorId = await motorcycleRepo.createMotorcycle(
@@ -219,16 +223,16 @@ void main() {
 
       // Must complete without unhandled exception
       await reconciler.reconcileForMotorcycle(
-          motorcycle: motor, schedules: schedules);
+        motorcycle: motor,
+        schedules: schedules,
+      );
 
       final jobs = await db.select(db.notificationJobs).get();
       expect(jobs.length, 1);
       expect(jobs.first.state, AppConstants.jobStateFailed);
     });
 
-    test(
-        'Deleting maintenance schedule cancels platform notifications and deletes jobs',
-        () async {
+    test('Deleting maintenance schedule cancels platform notifications and deletes jobs', () async {
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario',
         brand: 'Honda',
@@ -247,7 +251,9 @@ void main() {
       final motor = (await motorcycleRepo.getById(motorId))!;
       final schedules = await maintenanceRepo.getSchedules(motorId);
       await reconciler.reconcileForMotorcycle(
-          motorcycle: motor, schedules: schedules);
+        motorcycle: motor,
+        schedules: schedules,
+      );
 
       expect(mockNotif.scheduledNotifIds, isNotEmpty);
 
@@ -259,36 +265,38 @@ void main() {
       expect(remainingJobs, isEmpty);
     });
 
-    test('Deleting motorcycle cancels notifications for all its schedules',
-        () async {
-      final motorId = await motorcycleRepo.createMotorcycle(
-        nickname: 'Vario',
-        brand: 'Honda',
-        model: 'Vario 160',
-        motorcycleType: AppConstants.typeMatic,
-        initialOdometerKm: 1000,
-      );
-
-      await maintenanceRepo.createSchedule(
-        motorcycleId: motorId,
-        name: 'Oli Gardan',
-        intervalMonths: 12,
-        lastDoneDate: DateTime.now(),
-      );
-
-      final motor = (await motorcycleRepo.getById(motorId))!;
-      final schedules = await maintenanceRepo.getSchedules(motorId);
-      await reconciler.reconcileForMotorcycle(
-          motorcycle: motor, schedules: schedules);
-
-      await motorcycleRepo.deleteMotorcycle(motorId);
-
-      expect(mockNotif.cancelledNotifIds, isNotEmpty);
-    });
-
     test(
-        'Disabling notifications cancels platform notifications and marks jobs cancelled',
-        () async {
+      'Deleting motorcycle cancels notifications for all its schedules',
+      () async {
+        final motorId = await motorcycleRepo.createMotorcycle(
+          nickname: 'Vario',
+          brand: 'Honda',
+          model: 'Vario 160',
+          motorcycleType: AppConstants.typeMatic,
+          initialOdometerKm: 1000,
+        );
+
+        await maintenanceRepo.createSchedule(
+          motorcycleId: motorId,
+          name: 'Oli Gardan',
+          intervalMonths: 12,
+          lastDoneDate: DateTime.now(),
+        );
+
+        final motor = (await motorcycleRepo.getById(motorId))!;
+        final schedules = await maintenanceRepo.getSchedules(motorId);
+        await reconciler.reconcileForMotorcycle(
+          motorcycle: motor,
+          schedules: schedules,
+        );
+
+        await motorcycleRepo.deleteMotorcycle(motorId);
+
+        expect(mockNotif.cancelledNotifIds, isNotEmpty);
+      },
+    );
+
+    test('Disabling notifications cancels platform notifications and marks jobs cancelled', () async {
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario',
         brand: 'Honda',
@@ -307,7 +315,9 @@ void main() {
       final motor = (await motorcycleRepo.getById(motorId))!;
       final schedules = await maintenanceRepo.getSchedules(motorId);
       await reconciler.reconcileForMotorcycle(
-          motorcycle: motor, schedules: schedules);
+        motorcycle: motor,
+        schedules: schedules,
+      );
 
       // Disable notifications
       await settingsRepo.setNotificationsEnabled(false);
@@ -318,47 +328,48 @@ void main() {
     });
 
     test(
-        'Re-enabling notifications restores cancelled jobs and reschedules them',
-        () async {
-      final motorId = await motorcycleRepo.createMotorcycle(
-        nickname: 'Vario',
-        brand: 'Honda',
-        model: 'Vario 160',
-        motorcycleType: AppConstants.typeMatic,
-        initialOdometerKm: 1000,
-      );
+      'Re-enabling notifications restores cancelled jobs and reschedules them',
+      () async {
+        final motorId = await motorcycleRepo.createMotorcycle(
+          nickname: 'Vario',
+          brand: 'Honda',
+          model: 'Vario 160',
+          motorcycleType: AppConstants.typeMatic,
+          initialOdometerKm: 1000,
+        );
 
-      await maintenanceRepo.createSchedule(
-        motorcycleId: motorId,
-        name: 'Radiator Coolant',
-        intervalMonths: 6,
-        lastDoneDate: DateTime.now(),
-        reminderLeadDays: 7,
-      );
+        await maintenanceRepo.createSchedule(
+          motorcycleId: motorId,
+          name: 'Radiator Coolant',
+          intervalMonths: 6,
+          lastDoneDate: DateTime.now(),
+          reminderLeadDays: 7,
+        );
 
-      final motor = (await motorcycleRepo.getById(motorId))!;
-      final schedules = await maintenanceRepo.getSchedules(motorId);
-      await reconciler.reconcileForMotorcycle(
-          motorcycle: motor, schedules: schedules);
+        final motor = (await motorcycleRepo.getById(motorId))!;
+        final schedules = await maintenanceRepo.getSchedules(motorId);
+        await reconciler.reconcileForMotorcycle(
+          motorcycle: motor,
+          schedules: schedules,
+        );
 
-      // Disable notifications
-      await settingsRepo.setNotificationsEnabled(false);
-      var jobs = await db.select(db.notificationJobs).get();
-      expect(jobs.first.state, AppConstants.jobStateCancelled);
+        // Disable notifications
+        await settingsRepo.setNotificationsEnabled(false);
+        var jobs = await db.select(db.notificationJobs).get();
+        expect(jobs.first.state, AppConstants.jobStateCancelled);
 
-      mockNotif.scheduledNotifIds.clear();
+        mockNotif.scheduledNotifIds.clear();
 
-      // Re-enable notifications
-      await settingsRepo.setNotificationsEnabled(true);
-      jobs = await db.select(db.notificationJobs).get();
-      expect(jobs.length, equals(1));
-      expect(jobs.first.state, AppConstants.jobStateScheduled);
-      expect(mockNotif.scheduledNotifIds, isNotEmpty);
-    });
+        // Re-enable notifications
+        await settingsRepo.setNotificationsEnabled(true);
+        jobs = await db.select(db.notificationJobs).get();
+        expect(jobs.length, equals(1));
+        expect(jobs.first.state, AppConstants.jobStateScheduled);
+        expect(mockNotif.scheduledNotifIds, isNotEmpty);
+      },
+    );
 
-    test(
-        'Repeated toggling of notifications keeps state consistent without duplicates',
-        () async {
+    test('Repeated toggling of notifications keeps state consistent without duplicates', () async {
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario',
         brand: 'Honda',
@@ -378,7 +389,9 @@ void main() {
       final motor = (await motorcycleRepo.getById(motorId))!;
       final schedules = await maintenanceRepo.getSchedules(motorId);
       await reconciler.reconcileForMotorcycle(
-          motorcycle: motor, schedules: schedules);
+        motorcycle: motor,
+        schedules: schedules,
+      );
 
       // Toggle multiple times: false -> true -> false -> true
       await settingsRepo.setNotificationsEnabled(false);
@@ -391,9 +404,7 @@ void main() {
       expect(jobs.first.state, AppConstants.jobStateScheduled);
     });
 
-    test(
-        'Updating reminderLeadDays cancels old notification and reschedules with new date',
-        () async {
+    test('Updating reminderLeadDays cancels old notification and reschedules with new date', () async {
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario',
         brand: 'Honda',
@@ -413,7 +424,9 @@ void main() {
       var motor = (await motorcycleRepo.getById(motorId))!;
       var schedules = await maintenanceRepo.getSchedules(motorId);
       await reconciler.reconcileForMotorcycle(
-          motorcycle: motor, schedules: schedules);
+        motorcycle: motor,
+        schedules: schedules,
+      );
 
       var jobs = await db.select(db.notificationJobs).get();
       final initialPlannedAt = jobs.first.plannedAt;
@@ -446,7 +459,9 @@ void main() {
       motor = (await motorcycleRepo.getById(motorId))!;
       schedules = await maintenanceRepo.getSchedules(motorId);
       await reconciler.reconcileForMotorcycle(
-          motorcycle: motor, schedules: schedules);
+        motorcycle: motor,
+        schedules: schedules,
+      );
 
       jobs = await db.select(db.notificationJobs).get();
       expect(jobs.length, equals(1));
@@ -455,9 +470,7 @@ void main() {
       expect(mockNotif.scheduledNotifIds.contains(oldNotifId), isTrue);
     });
 
-    test(
-        'Due date in the past marks notification job state as delivered instead of scheduled',
-        () async {
+    test('Due date in the past marks notification job state as delivered instead of scheduled', () async {
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario',
         brand: 'Honda',
@@ -478,7 +491,9 @@ void main() {
       final motor = (await motorcycleRepo.getById(motorId))!;
       final schedules = await maintenanceRepo.getSchedules(motorId);
       await reconciler.reconcileForMotorcycle(
-          motorcycle: motor, schedules: schedules);
+        motorcycle: motor,
+        schedules: schedules,
+      );
 
       final jobs = await db.select(db.notificationJobs).get();
       expect(jobs.length, equals(1));

@@ -97,7 +97,9 @@ class MaintenanceRepository {
         ? AppFormatters.formatDateBusiness(lastDoneDate)
         : null;
 
-    await db.into(db.maintenanceSchedules).insert(
+    await db
+        .into(db.maintenanceSchedules)
+        .insert(
           MaintenanceSchedulesCompanion.insert(
             id: scheduleId,
             motorcycleId: motorcycleId,
@@ -118,7 +120,7 @@ class MaintenanceRepository {
         );
 
     if (notificationReconciler != null) {
-      notificationReconciler!.reconcileAll();
+      await notificationReconciler!.reconcileAll();
     }
 
     return scheduleId;
@@ -143,9 +145,9 @@ class MaintenanceRepository {
         ? AppFormatters.formatDateBusiness(schedule.manualLastDoneDate!)
         : null;
 
-    await (db.update(db.maintenanceSchedules)
-          ..where((tbl) => tbl.id.equals(schedule.id)))
-        .write(
+    await (db.update(
+      db.maintenanceSchedules,
+    )..where((tbl) => tbl.id.equals(schedule.id))).write(
       MaintenanceSchedulesCompanion(
         name: Value(schedule.name.trim()),
         category: Value(schedule.category?.trim()),
@@ -163,24 +165,34 @@ class MaintenanceRepository {
     );
 
     if (notificationReconciler != null) {
-      notificationReconciler!.reconcileAll();
+      await notificationReconciler!.reconcileAll();
     }
   }
 
   Future<void> toggleActive(String id, bool isActive) async {
+    if (!isActive && notificationReconciler != null) {
+      final cancelResult = await notificationReconciler!.cancelJobsForSchedule(
+        id,
+      );
+      if (!cancelResult.isSuccess) {
+        throw NotificationException(
+          'NOT-002',
+          'Gagal membatalkan pengingat di sistem Android: ${cancelResult.errorMessage ?? 'Kesalahan platform'}. Status jadwal tidak diubah.',
+        );
+      }
+    }
+
     final nowIso = DateTime.now().toIso8601String();
-    await (db.update(db.maintenanceSchedules)
-          ..where((tbl) => tbl.id.equals(id)))
-        .write(
+    await (db.update(
+      db.maintenanceSchedules,
+    )..where((tbl) => tbl.id.equals(id))).write(
       MaintenanceSchedulesCompanion(
         isActive: Value(isActive),
         updatedAt: Value(nowIso),
       ),
     );
 
-    if (!isActive && notificationReconciler != null) {
-      await notificationReconciler!.cancelJobsForSchedule(id);
-    } else if (isActive && notificationReconciler != null) {
+    if (isActive && notificationReconciler != null) {
       await notificationReconciler!.reconcileAll();
     }
   }
@@ -188,8 +200,9 @@ class MaintenanceRepository {
   Future<void> deleteSchedule(String id) async {
     // Cancel platform notifications and remove jobs before deleting database record
     if (notificationReconciler != null) {
-      final cancelResult =
-          await notificationReconciler!.cancelJobsForSchedule(id);
+      final cancelResult = await notificationReconciler!.cancelJobsForSchedule(
+        id,
+      );
       if (!cancelResult.isSuccess) {
         throw NotificationException(
           'NOT-002',
@@ -198,33 +211,40 @@ class MaintenanceRepository {
       }
     }
 
-    await (db.delete(db.maintenanceSchedules)
-          ..where((tbl) => tbl.id.equals(id)))
-        .go();
+    await (db.delete(
+      db.maintenanceSchedules,
+    )..where((tbl) => tbl.id.equals(id))).go();
   }
 
   /// Recalculates `lastDoneKm` and `lastDoneDate` for a schedule using its manual baseline
   /// and any valid service record items still linked to it.
-  Future<void> recalculateSchedule(String scheduleId,
-      {bool triggerReconcile = true}) async {
-    final scheduleRow = await (db.select(db.maintenanceSchedules)
-          ..where((tbl) => tbl.id.equals(scheduleId)))
-        .getSingleOrNull();
+  Future<void> recalculateSchedule(
+    String scheduleId, {
+    bool triggerReconcile = true,
+  }) async {
+    final scheduleRow = await (db.select(
+      db.maintenanceSchedules,
+    )..where((tbl) => tbl.id.equals(scheduleId))).getSingleOrNull();
 
     if (scheduleRow == null) return;
 
     // Find linked service items and their corresponding service records
-    final query = db.select(db.serviceRecordItems).join([
-      innerJoin(
-        db.serviceRecords,
-        db.serviceRecords.id.equalsExp(db.serviceRecordItems.serviceRecordId),
-      ),
-    ])
-      ..where(db.serviceRecordItems.maintenanceScheduleId.equals(scheduleId))
-      ..orderBy([
-        OrderingTerm.desc(db.serviceRecords.serviceDate),
-        OrderingTerm.desc(db.serviceRecords.odometerKm),
-      ]);
+    final query =
+        db.select(db.serviceRecordItems).join([
+            innerJoin(
+              db.serviceRecords,
+              db.serviceRecords.id.equalsExp(
+                db.serviceRecordItems.serviceRecordId,
+              ),
+            ),
+          ])
+          ..where(
+            db.serviceRecordItems.maintenanceScheduleId.equals(scheduleId),
+          )
+          ..orderBy([
+            OrderingTerm.desc(db.serviceRecords.serviceDate),
+            OrderingTerm.desc(db.serviceRecords.odometerKm),
+          ]);
 
     final results = await query.get();
 
@@ -233,8 +253,9 @@ class MaintenanceRepository {
 
     if (results.isNotEmpty) {
       final latestRecord = results.first.readTable(db.serviceRecords);
-      final recordDate =
-          AppFormatters.parseDateBusiness(latestRecord.serviceDate);
+      final recordDate = AppFormatters.parseDateBusiness(
+        latestRecord.serviceDate,
+      );
       final manualDate = resolvedDateStr != null
           ? AppFormatters.parseDateBusiness(resolvedDateStr)
           : null;
@@ -247,9 +268,9 @@ class MaintenanceRepository {
     }
 
     final nowIso = DateTime.now().toIso8601String();
-    await (db.update(db.maintenanceSchedules)
-          ..where((tbl) => tbl.id.equals(scheduleId)))
-        .write(
+    await (db.update(
+      db.maintenanceSchedules,
+    )..where((tbl) => tbl.id.equals(scheduleId))).write(
       MaintenanceSchedulesCompanion(
         lastDoneKm: Value(resolvedKm),
         lastDoneDate: Value(resolvedDateStr),

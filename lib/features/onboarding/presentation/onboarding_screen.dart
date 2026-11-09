@@ -23,24 +23,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final List<Map<String, dynamic>> _pages = [
     {
       'title': 'Catat & Pantau Perawatan',
-      'subtitle':
-          'Simpan data sepeda motor, pembacaan kilometer, dan riwayat pekerjaan servis lengkap beserta foto nota bukti pembayaran.',
+      'subtitle': 'Simpan data sepeda motor, pembacaan kilometer, dan riwayat pekerjaan servis lengkap beserta foto nota bukti pembayaran.',
       'icon': Icons.two_wheeler_rounded,
       'color': AppColors.primary,
       'asset': 'assets/illustrations/onboarding_1.svg',
     },
     {
       'title': 'Pengingat Tepat Waktu',
-      'subtitle':
-          'Dapatkan notifikasi lokal saat jarak tempuh atau waktu servis mendekati jatuh tempo, tanpa perlu bergantung pada koneksi internet.',
+      'subtitle': 'Dapatkan notifikasi lokal saat jarak tempuh atau waktu servis mendekati jatuh tempo, tanpa perlu bergantung pada koneksi internet.',
       'icon': Icons.notifications_active_rounded,
       'color': AppColors.statusSegera,
       'asset': 'assets/illustrations/onboarding_2.svg',
     },
     {
       'title': 'Laporan Biaya Transparan',
-      'subtitle':
-          'Evaluasi pengeluaran motor Anda secara berkala melalui ringkasan dan grafik pengeluaran bulanan yang akurat.',
+      'subtitle': 'Evaluasi pengeluaran motor Anda secara berkala melalui ringkasan dan grafik pengeluaran bulanan yang akurat.',
       'icon': Icons.bar_chart_rounded,
       'color': AppColors.statusAman,
       'asset': 'assets/illustrations/onboarding_3.svg',
@@ -94,8 +91,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               width: 140,
                               height: 140,
                               decoration: BoxDecoration(
-                                color: (page['color'] as Color)
-                                    .withValues(alpha: 0.12),
+                                color: (page['color'] as Color).withValues(
+                                  alpha: 0.12,
+                                ),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -110,15 +108,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         Text(
                           page['title'] as String,
                           textAlign: TextAlign.center,
-                          style:
-                              AppTypography.displayLarge.copyWith(fontSize: 24),
+                          style: AppTypography.displayLarge.copyWith(
+                            fontSize: 24,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           page['subtitle'] as String,
                           textAlign: TextAlign.center,
-                          style:
-                              AppTypography.bodyMedium.copyWith(fontSize: 15),
+                          style: AppTypography.bodyMedium.copyWith(
+                            fontSize: 15,
+                          ),
                         ),
                       ],
                     ),

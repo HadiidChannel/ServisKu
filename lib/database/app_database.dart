@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
@@ -23,16 +24,18 @@ LazyDatabase _openConnection() {
   });
 }
 
-@DriftDatabase(tables: [
-  Motorcycles,
-  OdometerReadings,
-  MaintenanceSchedules,
-  ServiceRecords,
-  ServiceRecordItems,
-  ServiceAttachments,
-  AppSettings,
-  NotificationJobs,
-])
+@DriftDatabase(
+  tables: [
+    Motorcycles,
+    OdometerReadings,
+    MaintenanceSchedules,
+    ServiceRecords,
+    ServiceRecordItems,
+    ServiceAttachments,
+    AppSettings,
+    NotificationJobs,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 

@@ -1,14 +1,12 @@
 import 'package:drift/drift.dart';
+
 import 'motorcycles_table.dart';
 
 @DataClassName('ServiceRecordRow')
 class ServiceRecords extends Table {
   TextColumn get id => text()();
-  TextColumn get motorcycleId => text().references(
-        Motorcycles,
-        #id,
-        onDelete: KeyAction.cascade,
-      )();
+  TextColumn get motorcycleId =>
+      text().references(Motorcycles, #id, onDelete: KeyAction.cascade)();
   TextColumn get serviceDate => text()(); // YYYY-MM-DD
   IntColumn get odometerKm => integer()();
   TextColumn get workshopName => text().nullable()();

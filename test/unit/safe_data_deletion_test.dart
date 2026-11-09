@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
@@ -66,9 +67,7 @@ void main() {
   }
 
   group('Safe Data Deletion Tests', () {
-    test(
-        'clearAllData cancels notifications, wipes all database tables, and cleans attachments',
-        () async {
+    test('clearAllData cancels notifications, wipes all database tables, and cleans attachments', () async {
       // 1. Populate data
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario Harian',

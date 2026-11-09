@@ -16,10 +16,7 @@ import '../domain/maintenance_schedule.dart';
 class MaintenanceScheduleScreen extends ConsumerStatefulWidget {
   final String motorcycleId;
 
-  const MaintenanceScheduleScreen({
-    super.key,
-    required this.motorcycleId,
-  });
+  const MaintenanceScheduleScreen({super.key, required this.motorcycleId});
 
   @override
   ConsumerState<MaintenanceScheduleScreen> createState() =>
@@ -33,17 +30,17 @@ class _MaintenanceScheduleScreenState
   @override
   Widget build(BuildContext context) {
     final motorcyclesAsync = ref.watch(motorcyclesStreamProvider);
-    final schedulesAsync =
-        ref.watch(motorcycleSchedulesProvider(widget.motorcycleId));
+    final schedulesAsync = ref.watch(
+      motorcycleSchedulesProvider(widget.motorcycleId),
+    );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Jadwal Perawatan'),
-      ),
+      appBar: AppBar(title: const Text('Jadwal Perawatan')),
       body: motorcyclesAsync.when(
         data: (motorcycles) {
-          final matches =
-              motorcycles.where((m) => m.id == widget.motorcycleId).toList();
+          final matches = motorcycles
+              .where((m) => m.id == widget.motorcycleId)
+              .toList();
           final motorcycle = matches.isNotEmpty ? matches.first : null;
 
           if (motorcycle == null) {
@@ -79,8 +76,10 @@ class _MaintenanceScheduleScreenState
                 children: [
                   // Filter Chips Bar
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     color: AppColors.surface,
                     child: Row(
                       children: [
@@ -104,8 +103,7 @@ class _MaintenanceScheduleScreenState
                                 children: [
                                   const EmptyIllustrationWidget(
                                     title: 'Tidak Ada Jadwal',
-                                    subtitle:
-                                        'Belum ada jadwal perawatan pada kategori filter ini.',
+                                    subtitle: 'Belum ada jadwal perawatan pada kategori filter ini.',
                                     icon: Icons.calendar_month_rounded,
                                   ),
                                   const SizedBox(height: 16),
@@ -167,17 +165,22 @@ class _MaintenanceScheduleScreenState
                                           StatusBadge(status: c.status),
                                           PopupMenuButton<String>(
                                             icon: const Icon(
-                                                Icons.more_vert_rounded),
+                                              Icons.more_vert_rounded,
+                                            ),
                                             onSelected: (val) async {
                                               if (val == 'edit') {
                                                 context.push(
-                                                    '/maintenance/${s.id}/edit');
+                                                  '/maintenance/${s.id}/edit',
+                                                );
                                               } else if (val == 'toggle') {
                                                 await ref
                                                     .read(
-                                                        maintenanceRepositoryProvider)
+                                                      maintenanceRepositoryProvider,
+                                                    )
                                                     .toggleActive(
-                                                        s.id, !s.isActive);
+                                                      s.id,
+                                                      !s.isActive,
+                                                    );
                                               } else if (val == 'delete') {
                                                 _confirmDelete(context, ref, s);
                                               }
@@ -187,8 +190,10 @@ class _MaintenanceScheduleScreenState
                                                 value: 'edit',
                                                 child: Row(
                                                   children: [
-                                                    Icon(Icons.edit_outlined,
-                                                        size: 20),
+                                                    Icon(
+                                                      Icons.edit_outlined,
+                                                      size: 20,
+                                                    ),
                                                     SizedBox(width: 10),
                                                     Text('Ubah Jadwal'),
                                                   ],
@@ -201,15 +206,17 @@ class _MaintenanceScheduleScreenState
                                                     Icon(
                                                       s.isActive
                                                           ? Icons
-                                                              .pause_circle_outline_rounded
+                                                                .pause_circle_outline_rounded
                                                           : Icons
-                                                              .play_circle_outline_rounded,
+                                                                .play_circle_outline_rounded,
                                                       size: 20,
                                                     ),
                                                     const SizedBox(width: 10),
-                                                    Text(s.isActive
-                                                        ? 'Nonaktifkan'
-                                                        : 'Aktifkan'),
+                                                    Text(
+                                                      s.isActive
+                                                          ? 'Nonaktifkan'
+                                                          : 'Aktifkan',
+                                                    ),
                                                   ],
                                                 ),
                                               ),
@@ -218,16 +225,20 @@ class _MaintenanceScheduleScreenState
                                                 child: Row(
                                                   children: [
                                                     Icon(
-                                                        Icons
-                                                            .delete_outline_rounded,
-                                                        size: 20,
-                                                        color: AppColors
-                                                            .statusTerlambat),
+                                                      Icons
+                                                          .delete_outline_rounded,
+                                                      size: 20,
+                                                      color: AppColors
+                                                          .statusTerlambat,
+                                                    ),
                                                     SizedBox(width: 10),
-                                                    Text('Hapus Jadwal',
-                                                        style: TextStyle(
-                                                            color: AppColors
-                                                                .statusTerlambat)),
+                                                    Text(
+                                                      'Hapus Jadwal',
+                                                      style: TextStyle(
+                                                        color: AppColors
+                                                            .statusTerlambat,
+                                                      ),
+                                                    ),
                                                   ],
                                                 ),
                                               ),
@@ -253,8 +264,8 @@ class _MaintenanceScheduleScreenState
                                               AppColors.surfaceVariant,
                                           valueColor:
                                               AlwaysStoppedAnimation<Color>(
-                                            c.status.color,
-                                          ),
+                                                c.status.color,
+                                              ),
                                         ),
                                       ),
                                       const Divider(height: 20),

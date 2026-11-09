@@ -4,6 +4,29 @@ import '../../../core/services/notification_service.dart';
 import '../../../database/app_database.dart';
 import '../../maintenance/application/notification_reconciler.dart';
 
+enum NotificationToggleStatus {
+  enabled,
+  permissionDenied,
+  disabled,
+  cancelFailed,
+}
+
+class NotificationToggleResult {
+  final NotificationToggleStatus status;
+  final String? message;
+  final bool hasPermission;
+
+  const NotificationToggleResult({
+    required this.status,
+    this.message,
+    this.hasPermission = false,
+  });
+
+  bool get isSuccess =>
+      status == NotificationToggleStatus.enabled ||
+      status == NotificationToggleStatus.disabled;
+}
+
 class DataDeletionResult {
   final bool databaseSuccess;
   final bool notificationsCancelled;
@@ -43,7 +66,9 @@ class SettingsRepository {
 
   Future<void> setSetting(String key, String value) async {
     final nowIso = DateTime.now().toIso8601String();
-    await db.into(db.appSettings).insertOnConflictUpdate(
+    await db
+        .into(db.appSettings)
+        .insertOnConflictUpdate(
           AppSettingsCompanion.insert(
             key: key,
             value: value,
@@ -59,7 +84,9 @@ class SettingsRepository {
 
   Future<void> setOnboardingCompleted(bool completed) async {
     await setSetting(
-        AppConstants.keyOnboardingCompleted, completed ? 'true' : 'false');
+      AppConstants.keyOnboardingCompleted,
+      completed ? 'true' : 'false',
+    );
   }
 
   Future<String?> getActiveMotorcycleId() async {
@@ -76,19 +103,58 @@ class SettingsRepository {
     return val == 'true';
   }
 
-  Future<void> setNotificationsEnabled(bool enabled) async {
-    await setSetting(
-        AppConstants.keyNotificationsEnabled, enabled ? 'true' : 'false');
-    if (!enabled) {
-      if (notificationReconciler != null) {
-        await notificationReconciler!.onNotificationsDisabled();
-      } else {
-        await notificationService.cancelAllNotifications();
+  Future<NotificationToggleResult> setNotificationsEnabled(bool enabled) async {
+    if (enabled) {
+      // 1. Single owner checks and requests OS permission
+      var granted = await notificationService.areNotificationsEnabled();
+      if (!granted) {
+        granted = await notificationService.requestPermission();
       }
-    } else {
+
+      if (!granted) {
+        // Permission was denied: do not set keyNotificationsEnabled to true
+        await setSetting(AppConstants.keyNotificationsEnabled, 'false');
+        return const NotificationToggleResult(
+          status: NotificationToggleStatus.permissionDenied,
+          hasPermission: false,
+          message: 'Izin notifikasi tidak diberikan. Pengingat tetap dapat dilihat di aplikasi.',
+        );
+      }
+
+      // Permission granted: save preference and reconcile
+      await setSetting(AppConstants.keyNotificationsEnabled, 'true');
       if (notificationReconciler != null) {
         await notificationReconciler!.reconcileAll();
       }
+      return const NotificationToggleResult(
+        status: NotificationToggleStatus.enabled,
+        hasPermission: true,
+        message: 'Pengingat berhasil diaktifkan.',
+      );
+    } else {
+      // 2. Disabling notifications
+      await setSetting(AppConstants.keyNotificationsEnabled, 'false');
+      NotificationCancelResult cancelRes;
+      if (notificationReconciler != null) {
+        cancelRes = await notificationReconciler!.onNotificationsDisabled();
+      } else {
+        cancelRes = await notificationService.cancelAllNotifications();
+      }
+
+      if (!cancelRes.isSuccess) {
+        return NotificationToggleResult(
+          status: NotificationToggleStatus.cancelFailed,
+          hasPermission: true,
+          message:
+              'Sebagian pengingat di sistem Android gagal dibatalkan: ${cancelRes.errorMessage ?? 'Kesalahan platform'}.',
+        );
+      }
+
+      return const NotificationToggleResult(
+        status: NotificationToggleStatus.disabled,
+        hasPermission: true,
+        message: 'Pengingat dinonaktifkan.',
+      );
     }
   }
 
@@ -107,8 +173,7 @@ class SettingsRepository {
         databaseSuccess: false,
         notificationsCancelled: false,
         attachmentsCleaned: false,
-        errorMessage:
-            'Gagal membatalkan pengingat di sistem Android. Penghapusan data dibatalkan demi keamanan.',
+        errorMessage: 'Gagal membatalkan pengingat di sistem Android. Penghapusan data dibatalkan demi keamanan.',
       );
     }
 

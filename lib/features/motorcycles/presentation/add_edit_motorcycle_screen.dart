@@ -15,10 +15,7 @@ import '../domain/motorcycle.dart';
 class AddEditMotorcycleScreen extends ConsumerStatefulWidget {
   final Motorcycle? motorcycle;
 
-  const AddEditMotorcycleScreen({
-    super.key,
-    this.motorcycle,
-  });
+  const AddEditMotorcycleScreen({super.key, this.motorcycle});
 
   @override
   ConsumerState<AddEditMotorcycleScreen> createState() =>
@@ -50,11 +47,13 @@ class _AddEditMotorcycleScreenState
     _nicknameController = TextEditingController(text: m?.nickname ?? '');
     _brandController = TextEditingController(text: m?.brand ?? '');
     _modelController = TextEditingController(text: m?.model ?? '');
-    _yearController =
-        TextEditingController(text: m?.manufactureYear?.toString() ?? '');
+    _yearController = TextEditingController(
+      text: m?.manufactureYear?.toString() ?? '',
+    );
     _plateController = TextEditingController(text: m?.licensePlate ?? '');
-    _odometerController =
-        TextEditingController(text: m?.currentOdometerKm.toString() ?? '0');
+    _odometerController = TextEditingController(
+      text: m?.currentOdometerKm.toString() ?? '0',
+    );
     _notesController = TextEditingController(text: m?.notes ?? '');
 
     _selectedType = m?.motorcycleType ?? AppConstants.typeMatic;
@@ -217,10 +216,7 @@ class _AddEditMotorcycleScreenState
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Tipe Motor *',
-                  style: AppTypography.titleSmall,
-                ),
+                const Text('Tipe Motor *', style: AppTypography.titleSmall),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -240,10 +236,14 @@ class _AddEditMotorcycleScreenState
                 Row(
                   children: [
                     _buildPropulsionChip(
-                        'Bensin', AppConstants.propulsionGasoline),
+                      'Bensin',
+                      AppConstants.propulsionGasoline,
+                    ),
                     const SizedBox(width: 8),
                     _buildPropulsionChip(
-                        'Listrik', AppConstants.propulsionElectric),
+                      'Listrik',
+                      AppConstants.propulsionElectric,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -285,8 +285,7 @@ class _AddEditMotorcycleScreenState
                     label: 'Kilometer Saat Ini (km) *',
                     hint: '0',
                     keyboardType: TextInputType.number,
-                    helperText:
-                        'Kilometer awal akan dicatat sebagai titik acuan servis.',
+                    helperText: 'Kilometer awal akan dicatat sebagai titik acuan servis.',
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {
                         return 'Masukkan kilometer yang valid.';
@@ -345,8 +344,9 @@ class _AddEditMotorcycleScreenState
               label,
               style: TextStyle(
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color:
-                    isSelected ? AppColors.primaryDark : AppColors.textPrimary,
+                color: isSelected
+                    ? AppColors.primaryDark
+                    : AppColors.textPrimary,
               ),
             ),
           ),
@@ -376,8 +376,9 @@ class _AddEditMotorcycleScreenState
               label,
               style: TextStyle(
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color:
-                    isSelected ? AppColors.primaryDark : AppColors.textPrimary,
+                color: isSelected
+                    ? AppColors.primaryDark
+                    : AppColors.textPrimary,
               ),
             ),
           ),

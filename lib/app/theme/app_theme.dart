@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'app_colors.dart';
 import 'app_typography.dart';
 
@@ -59,22 +60,26 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle:
-              AppTypography.labelLarge.copyWith(color: AppColors.primary),
+          textStyle: AppTypography.labelLarge.copyWith(
+            color: AppColors.primary,
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle:
-              AppTypography.labelLarge.copyWith(color: AppColors.primary),
+          textStyle: AppTypography.labelLarge.copyWith(
+            color: AppColors.primary,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.border),
@@ -93,11 +98,14 @@ class AppTheme {
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: AppColors.statusTerlambat, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.statusTerlambat,
+            width: 1.5,
+          ),
         ),
-        hintStyle:
-            AppTypography.bodyMedium.copyWith(color: AppColors.textMuted),
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.textMuted,
+        ),
         labelStyle: AppTypography.bodyMedium,
       ),
       dividerTheme: const DividerThemeData(

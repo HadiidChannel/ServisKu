@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -34,11 +35,7 @@ class ServiceRecordFormScreen extends ConsumerStatefulWidget {
   final String? recordId;
   final String? vehicleId;
 
-  const ServiceRecordFormScreen({
-    super.key,
-    this.recordId,
-    this.vehicleId,
-  });
+  const ServiceRecordFormScreen({super.key, this.recordId, this.vehicleId});
 
   @override
   ConsumerState<ServiceRecordFormScreen> createState() =>
@@ -93,13 +90,15 @@ class _ServiceRecordFormScreenState
 
         _items.clear();
         for (final it in record.items) {
-          _items.add(ServiceItemFormData(
-            itemName: it.itemName,
-            category: it.category,
-            itemCost: it.itemCost,
-            maintenanceScheduleId: it.maintenanceScheduleId,
-            notes: it.notes,
-          ));
+          _items.add(
+            ServiceItemFormData(
+              itemName: it.itemName,
+              category: it.category,
+              itemCost: it.itemCost,
+              maintenanceScheduleId: it.maintenanceScheduleId,
+              notes: it.notes,
+            ),
+          );
         }
 
         for (final att in record.attachments) {
@@ -212,13 +211,15 @@ class _ServiceRecordFormScreenState
       final serviceRepo = ref.read(serviceRecordRepositoryProvider);
 
       final itemsPayload = _items
-          .map((i) => {
-                'itemName': i.itemName.trim(),
-                'category': i.category?.trim(),
-                'itemCost': i.itemCost,
-                'maintenanceScheduleId': i.maintenanceScheduleId,
-                'notes': i.notes?.trim(),
-              })
+          .map(
+            (i) => {
+              'itemName': i.itemName.trim(),
+              'category': i.category?.trim(),
+              'itemCost': i.itemCost,
+              'maintenanceScheduleId': i.maintenanceScheduleId,
+              'notes': i.notes?.trim(),
+            },
+          )
           .toList();
 
       CreateServiceRecordResult? createResult;
@@ -271,9 +272,11 @@ class _ServiceRecordFormScreenState
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEditing
-                ? 'Catatan servis berhasil diperbarui.'
-                : 'Catatan servis berhasil disimpan.'),
+            content: Text(
+              isEditing
+                  ? 'Catatan servis berhasil diperbarui.'
+                  : 'Catatan servis berhasil disimpan.',
+            ),
           ),
         );
       }
@@ -282,8 +285,9 @@ class _ServiceRecordFormScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.statusTerlambat),
+          content: Text(e.message),
+          backgroundColor: AppColors.statusTerlambat,
+        ),
       );
     } catch (_) {
       if (!mounted) return;
@@ -309,8 +313,9 @@ class _ServiceRecordFormScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title:
-            Text(isEditing ? 'Ubah Catatan Servis' : 'Tambah Catatan Servis'),
+        title: Text(
+          isEditing ? 'Ubah Catatan Servis' : 'Tambah Catatan Servis',
+        ),
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -318,7 +323,10 @@ class _ServiceRecordFormScreenState
           color: AppColors.surface,
           boxShadow: [
             BoxShadow(
-                color: Colors.black12, blurRadius: 8, offset: Offset(0, -2))
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, -2),
+            ),
           ],
         ),
         child: SafeArea(
@@ -329,8 +337,10 @@ class _ServiceRecordFormScreenState
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Total Biaya Servis',
-                        style: AppTypography.bodySmall),
+                    const Text(
+                      'Total Biaya Servis',
+                      style: AppTypography.bodySmall,
+                    ),
                     Text(
                       AppFormatters.formatRupiah(_calculatedTotal),
                       style: AppTypography.headlineSmall.copyWith(
@@ -368,8 +378,9 @@ class _ServiceRecordFormScreenState
 
                     return DropdownButtonFormField<String>(
                       initialValue: _selectedMotorcycleId,
-                      decoration:
-                          const InputDecoration(labelText: 'Pilih Motor *'),
+                      decoration: const InputDecoration(
+                        labelText: 'Pilih Motor *',
+                      ),
                       items: list.map((m) {
                         return DropdownMenuItem<String>(
                           value: m.id,
@@ -416,19 +427,26 @@ class _ServiceRecordFormScreenState
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Text('Tanggal Servis *',
-                                      style: TextStyle(
-                                          fontSize: 10,
-                                          color: AppColors.textMuted)),
+                                  const Text(
+                                    'Tanggal Servis *',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
                                   Text(
                                     AppFormatters.formatDateIndonesian(
-                                        _serviceDate),
+                                      _serviceDate,
+                                    ),
                                     style: AppTypography.titleSmall,
                                   ),
                                 ],
                               ),
-                              const Icon(Icons.calendar_today_rounded,
-                                  size: 16, color: AppColors.primary),
+                              const Icon(
+                                Icons.calendar_today_rounded,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
                             ],
                           ),
                         ),
@@ -523,14 +541,18 @@ class _ServiceRecordFormScreenState
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.camera_alt_outlined,
-                              color: AppColors.primary),
+                          icon: const Icon(
+                            Icons.camera_alt_outlined,
+                            color: AppColors.primary,
+                          ),
                           tooltip: 'Ambil Foto',
                           onPressed: () => _pickImage(ImageSource.camera),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.photo_library_outlined,
-                              color: AppColors.primary),
+                          icon: const Icon(
+                            Icons.photo_library_outlined,
+                            color: AppColors.primary,
+                          ),
                           tooltip: 'Pilih dari Galeri',
                           onPressed: () => _pickImage(ImageSource.gallery),
                         ),
@@ -549,7 +571,9 @@ class _ServiceRecordFormScreenState
                       color: AppColors.surfaceVariant.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                          color: AppColors.border, style: BorderStyle.solid),
+                        color: AppColors.border,
+                        style: BorderStyle.solid,
+                      ),
                     ),
                     child: const Center(
                       child: Text(
@@ -609,15 +633,19 @@ class _ServiceRecordFormScreenState
                                   right: 4,
                                   child: InkWell(
                                     onTap: () => setState(
-                                        () => _selectedPhotos.remove(file)),
+                                      () => _selectedPhotos.remove(file),
+                                    ),
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
                                       decoration: const BoxDecoration(
                                         color: Colors.black54,
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(Icons.close_rounded,
-                                          size: 14, color: Colors.white),
+                                      child: const Icon(
+                                        Icons.close_rounded,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -639,7 +667,9 @@ class _ServiceRecordFormScreenState
   }
 
   Widget _buildItemCard(
-      int index, List<MaintenanceSchedule> availableSchedules) {
+    int index,
+    List<MaintenanceSchedule> availableSchedules,
+  ) {
     final item = _items[index];
 
     return Card(
@@ -653,13 +683,17 @@ class _ServiceRecordFormScreenState
               children: [
                 Text(
                   'Item #${index + 1}',
-                  style: AppTypography.titleSmall
-                      .copyWith(color: AppColors.primary),
+                  style: AppTypography.titleSmall.copyWith(
+                    color: AppColors.primary,
+                  ),
                 ),
                 if (_items.length > 1)
                   IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded,
-                        size: 20, color: AppColors.statusTerlambat),
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      size: 20,
+                      color: AppColors.statusTerlambat,
+                    ),
                     onPressed: () {
                       setState(() {
                         _items.removeAt(index);
@@ -688,8 +722,9 @@ class _ServiceRecordFormScreenState
               children: [
                 Expanded(
                   child: TextFormField(
-                    initialValue:
-                        item.itemCost > 0 ? item.itemCost.toString() : '0',
+                    initialValue: item.itemCost > 0
+                        ? item.itemCost.toString()
+                        : '0',
                     decoration: const InputDecoration(
                       labelText: 'Biaya (Rp) *',
                       hintText: '0',
@@ -734,8 +769,11 @@ class _ServiceRecordFormScreenState
                   ...availableSchedules.map((s) {
                     return DropdownMenuItem<String?>(
                       value: s.id,
-                      child: Text(s.name,
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        s.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }),
                 ],

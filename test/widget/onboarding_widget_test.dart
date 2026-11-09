@@ -4,14 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:servis/features/onboarding/presentation/onboarding_screen.dart';
 
 void main() {
-  testWidgets('OnboardingScreen displays benefits and actions',
-      (WidgetTester tester) async {
+  testWidgets('OnboardingScreen displays benefits and actions', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: OnboardingScreen(),
-        ),
-      ),
+      const ProviderScope(child: MaterialApp(home: OnboardingScreen())),
     );
 
     expect(find.text('Catat & Pantau Perawatan'), findsOneWidget);

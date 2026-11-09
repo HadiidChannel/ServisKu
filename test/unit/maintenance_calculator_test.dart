@@ -140,38 +140,39 @@ void main() {
     });
 
     test(
-        'Incomplete baseline gives Belum diatur unless other boundary is overdue',
-        () {
-      final incompleteSchedule = MaintenanceSchedule(
-        id: 's4',
-        motorcycleId: 'm1',
-        name: 'Busi',
-        intervalKm: 8000,
-        lastDoneKm: null, // missing km baseline!
-        intervalMonths: 6,
-        lastDoneDate: DateTime(2026, 1, 1),
-        reminderLeadDays: 7,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+      'Incomplete baseline gives Belum diatur unless other boundary is overdue',
+      () {
+        final incompleteSchedule = MaintenanceSchedule(
+          id: 's4',
+          motorcycleId: 'm1',
+          name: 'Busi',
+          intervalKm: 8000,
+          lastDoneKm: null, // missing km baseline!
+          intervalMonths: 6,
+          lastDoneDate: DateTime(2026, 1, 1),
+          reminderLeadDays: 7,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
 
-      // Date is not overdue yet (Feb 1), but km baseline is missing -> Belum diatur
-      final res1 = MaintenanceCalculator.calculate(
-        schedule: incompleteSchedule,
-        currentOdometerKm: 5000,
-        today: DateTime(2026, 2, 1),
-      );
-      expect(res1.status, MaintenanceStatus.belumDiatur);
-      expect(res1.reason, contains('Kilometer terakhir belum diisi'));
+        // Date is not overdue yet (Feb 1), but km baseline is missing -> Belum diatur
+        final res1 = MaintenanceCalculator.calculate(
+          schedule: incompleteSchedule,
+          currentOdometerKm: 5000,
+          today: DateTime(2026, 2, 1),
+        );
+        expect(res1.status, MaintenanceStatus.belumDiatur);
+        expect(res1.reason, contains('Kilometer terakhir belum diisi'));
 
-      // If date is overdue (August 1) -> Terlambat!
-      final res2 = MaintenanceCalculator.calculate(
-        schedule: incompleteSchedule,
-        currentOdometerKm: 5000,
-        today: DateTime(2026, 8, 1),
-      );
-      expect(res2.status, MaintenanceStatus.terlambat);
-    });
+        // If date is overdue (August 1) -> Terlambat!
+        final res2 = MaintenanceCalculator.calculate(
+          schedule: incompleteSchedule,
+          currentOdometerKm: 5000,
+          today: DateTime(2026, 8, 1),
+        );
+        expect(res2.status, MaintenanceStatus.terlambat);
+      },
+    );
 
     test('Cycle key generation changes when baseline changes', () {
       final sched1 = MaintenanceSchedule(

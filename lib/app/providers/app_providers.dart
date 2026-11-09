@@ -24,8 +24,9 @@ final databaseProvider = Provider<AppDatabase>((ref) {
 });
 
 // Services
-final attachmentStorageServiceProvider =
-    Provider<AttachmentStorageService>((ref) {
+final attachmentStorageServiceProvider = Provider<AttachmentStorageService>((
+  ref,
+) {
   return AttachmentStorageService();
 });
 
@@ -63,8 +64,9 @@ final maintenanceRepositoryProvider = Provider<MaintenanceRepository>((ref) {
   );
 });
 
-final serviceRecordRepositoryProvider =
-    Provider<ServiceRecordRepository>((ref) {
+final serviceRecordRepositoryProvider = Provider<ServiceRecordRepository>((
+  ref,
+) {
   return ServiceRecordRepository(
     db: ref.watch(databaseProvider),
     attachmentService: ref.watch(attachmentStorageServiceProvider),
@@ -115,8 +117,8 @@ class ActiveMotorcycleIdNotifier extends StateNotifier<String?> {
 
 final activeMotorcycleIdProvider =
     StateNotifierProvider<ActiveMotorcycleIdNotifier, String?>((ref) {
-  return ActiveMotorcycleIdNotifier(ref.watch(settingsRepositoryProvider));
-});
+      return ActiveMotorcycleIdNotifier(ref.watch(settingsRepositoryProvider));
+    });
 
 // Active Motorcycle Provider
 final activeMotorcycleProvider = Provider<Motorcycle?>((ref) {
@@ -139,18 +141,22 @@ final activeMotorcycleProvider = Provider<Motorcycle?>((ref) {
 
 // Maintenance Schedules Stream by motorcycleId
 final motorcycleSchedulesProvider =
-    StreamProvider.family<List<MaintenanceSchedule>, String>(
-        (ref, motorcycleId) {
-  return ref.watch(maintenanceRepositoryProvider).watchSchedules(motorcycleId);
-});
+    StreamProvider.family<List<MaintenanceSchedule>, String>((
+      ref,
+      motorcycleId,
+    ) {
+      return ref
+          .watch(maintenanceRepositoryProvider)
+          .watchSchedules(motorcycleId);
+    });
 
 // Service Records Stream by motorcycleId
 final motorcycleServiceRecordsProvider =
     StreamProvider.family<List<ServiceRecord>, String?>((ref, motorcycleId) {
-  return ref
-      .watch(serviceRecordRepositoryProvider)
-      .watchRecords(motorcycleId: motorcycleId);
-});
+      return ref
+          .watch(serviceRecordRepositoryProvider)
+          .watchRecords(motorcycleId: motorcycleId);
+    });
 
 // Current Month Expense for Active Motorcycle - reactively observes service records
 final activeMotorcycleMonthExpenseProvider = StreamProvider<int>((ref) {
@@ -193,15 +199,19 @@ class ReportFilterParams {
 }
 
 final expenseReportStreamProvider =
-    StreamProvider.family<ExpenseReportSummary, ReportFilterParams>(
-        (ref, params) {
-  return ref.watch(reportRepositoryProvider).watchReportSummary(
-        motorcycleId: params.motorcycleId,
-        period: params.period,
-        customStartDate: params.customStartDate,
-        customEndDate: params.customEndDate,
-      );
-});
+    StreamProvider.family<ExpenseReportSummary, ReportFilterParams>((
+      ref,
+      params,
+    ) {
+      return ref
+          .watch(reportRepositoryProvider)
+          .watchReportSummary(
+            motorcycleId: params.motorcycleId,
+            period: params.period,
+            customStartDate: params.customStartDate,
+            customEndDate: params.customEndDate,
+          );
+    });
 
 // Dashboard Schedule Priority Item
 class DashboardScheduleItem {
@@ -218,6 +228,9 @@ class DashboardScheduleItem {
 class DashboardSummary {
   final Motorcycle? activeMotorcycle;
   final bool isLoading;
+  final bool isSchedulesLoading;
+  final bool isRecordsLoading;
+  final bool isExpenseLoading;
   final bool hasSchedulesError;
   final bool hasRecordsError;
   final bool hasExpenseError;
@@ -232,6 +245,9 @@ class DashboardSummary {
   const DashboardSummary({
     this.activeMotorcycle,
     this.isLoading = false,
+    this.isSchedulesLoading = false,
+    this.isRecordsLoading = false,
+    this.isExpenseLoading = false,
     this.hasSchedulesError = false,
     this.hasRecordsError = false,
     this.hasExpenseError = false,
@@ -255,8 +271,9 @@ int compareScheduleUrgency(DashboardScheduleItem a, DashboardScheduleItem b) {
   if (pA != pB) return pA.compareTo(pB);
 
   // Unclamped progress preserves true relative overdue severity
-  final progressCompare =
-      b.calculation.unclampedProgress.compareTo(a.calculation.unclampedProgress);
+  final progressCompare = b.calculation.unclampedProgress.compareTo(
+    a.calculation.unclampedProgress,
+  );
   if (progressCompare != 0) return progressCompare;
 
   // Deterministic tie-break
@@ -269,15 +286,22 @@ final dashboardSummaryProvider = Provider<DashboardSummary>((ref) {
     return const DashboardSummary();
   }
 
-  final schedulesAsync =
-      ref.watch(motorcycleSchedulesProvider(activeMotorcycle.id));
-  final recordsAsync =
-      ref.watch(motorcycleServiceRecordsProvider(activeMotorcycle.id));
+  final schedulesAsync = ref.watch(
+    motorcycleSchedulesProvider(activeMotorcycle.id),
+  );
+  final recordsAsync = ref.watch(
+    motorcycleServiceRecordsProvider(activeMotorcycle.id),
+  );
   final monthExpenseAsync = ref.watch(activeMotorcycleMonthExpenseProvider);
 
+  final isSchedulesLoading =
+      schedulesAsync.isLoading && !schedulesAsync.hasValue;
+  final isRecordsLoading = recordsAsync.isLoading && !recordsAsync.hasValue;
+  final isExpenseLoading =
+      monthExpenseAsync.isLoading && !monthExpenseAsync.hasValue;
+
   final isInitialLoading =
-      (schedulesAsync.isLoading && !schedulesAsync.hasValue) ||
-          (recordsAsync.isLoading && !recordsAsync.hasValue);
+      isSchedulesLoading || isRecordsLoading || isExpenseLoading;
 
   final hasSchedulesError = schedulesAsync.hasError;
   final hasRecordsError = recordsAsync.hasError;
@@ -308,10 +332,9 @@ final dashboardSummaryProvider = Provider<DashboardSummary>((ref) {
       safe++;
     }
 
-    calculatedItems.add(DashboardScheduleItem(
-      schedule: schedule,
-      calculation: result,
-    ));
+    calculatedItems.add(
+      DashboardScheduleItem(schedule: schedule, calculation: result),
+    );
   }
 
   // Strict deterministic sorting
@@ -324,6 +347,9 @@ final dashboardSummaryProvider = Provider<DashboardSummary>((ref) {
   return DashboardSummary(
     activeMotorcycle: activeMotorcycle,
     isLoading: isInitialLoading,
+    isSchedulesLoading: isSchedulesLoading,
+    isRecordsLoading: isRecordsLoading,
+    isExpenseLoading: isExpenseLoading,
     hasSchedulesError: hasSchedulesError,
     hasRecordsError: hasRecordsError,
     hasExpenseError: hasExpenseError,

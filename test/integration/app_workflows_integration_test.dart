@@ -46,9 +46,7 @@ void main() {
   });
 
   group('Full End-to-End Application Integration Workflows', () {
-    test(
-        'Complete motorcycle lifecycle: CRUD, Odometer, Schedules, Service, Recalculation, Reports, and Cascade Delete',
-        () async {
+    test('Complete motorcycle lifecycle: CRUD, Odometer, Schedules, Service, Recalculation, Reports, and Cascade Delete', () async {
       // 1. Add first motorcycle (Vario 160)
       final varioId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario Harian',
@@ -176,8 +174,10 @@ void main() {
       // 7. Verify schedule baseline updated to 7000 km & today
       schedule = await maintenanceRepo.getById(scheduleId);
       expect(schedule?.lastDoneKm, 7000);
-      expect(schedule?.manualLastDoneKm,
-          5000); // manual baseline safely preserved!
+      expect(
+        schedule?.manualLastDoneKm,
+        5000,
+      ); // manual baseline safely preserved!
 
       // Re-evaluate schedule: due km is now 7000 + 2000 = 9000 km!
       // Current odometer is 7000. Remaining: 2000 km -> Aman!

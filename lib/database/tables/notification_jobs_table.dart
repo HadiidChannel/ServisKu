@@ -1,14 +1,15 @@
 import 'package:drift/drift.dart';
+
 import 'maintenance_schedules_table.dart';
 
 @DataClassName('NotificationJobRow')
 class NotificationJobs extends Table {
   TextColumn get id => text()();
   TextColumn get maintenanceScheduleId => text().references(
-        MaintenanceSchedules,
-        #id,
-        onDelete: KeyAction.cascade,
-      )();
+    MaintenanceSchedules,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
   TextColumn get cycleKey => text()();
   TextColumn get triggerType => text()(); // date_due, km_soon, km_overdue
   IntColumn get platformNotificationId => integer()();
@@ -22,6 +23,6 @@ class NotificationJobs extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [
-        {maintenanceScheduleId, cycleKey, triggerType},
-      ];
+    {maintenanceScheduleId, cycleKey, triggerType},
+  ];
 }

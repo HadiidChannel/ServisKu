@@ -1,14 +1,12 @@
 import 'package:drift/drift.dart';
+
 import 'motorcycles_table.dart';
 
 @DataClassName('MaintenanceScheduleRow')
 class MaintenanceSchedules extends Table {
   TextColumn get id => text()();
-  TextColumn get motorcycleId => text().references(
-        Motorcycles,
-        #id,
-        onDelete: KeyAction.cascade,
-      )();
+  TextColumn get motorcycleId =>
+      text().references(Motorcycles, #id, onDelete: KeyAction.cascade)();
   TextColumn get name => text()();
   TextColumn get category => text().nullable()();
   IntColumn get intervalKm => integer().nullable()();

@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -26,13 +27,12 @@ class _ServiceHistoryScreenState extends ConsumerState<ServiceHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final motorcyclesAsync = ref.watch(motorcyclesStreamProvider);
-    final recordsStream =
-        ref.watch(motorcycleServiceRecordsProvider(_selectedMotorcycleId));
+    final recordsStream = ref.watch(
+      motorcycleServiceRecordsProvider(_selectedMotorcycleId),
+    );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Riwayat Servis'),
-      ),
+      appBar: AppBar(title: const Text('Riwayat Servis')),
       body: Column(
         children: [
           // Motorcycle Filter Bar
@@ -41,8 +41,10 @@ class _ServiceHistoryScreenState extends ConsumerState<ServiceHistoryScreen> {
               if (motorcycles.isEmpty) return const SizedBox();
 
               return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 color: AppColors.surface,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -114,8 +116,7 @@ class _ServiceHistoryScreenState extends ConsumerState<ServiceHistoryScreen> {
                         children: [
                           const EmptyIllustrationWidget(
                             title: 'Belum Ada Riwayat Servis',
-                            subtitle:
-                                'Catat kunjungan servis motor Anda untuk menyimpan bukti nota dan melacak biaya.',
+                            subtitle: 'Catat kunjungan servis motor Anda untuk menyimpan bukti nota dan melacak biaya.',
                             icon: Icons.receipt_long_rounded,
                           ),
                           const SizedBox(height: 20),
@@ -167,12 +168,14 @@ class _ServiceHistoryScreenState extends ConsumerState<ServiceHistoryScreen> {
                                       children: [
                                         Text(
                                           AppFormatters.formatDateIndonesian(
-                                              rec.serviceDate),
+                                            rec.serviceDate,
+                                          ),
                                           style: AppTypography.titleSmall,
                                         ),
                                         Text(
                                           AppFormatters.formatRupiah(
-                                              rec.totalCost),
+                                            rec.totalCost,
+                                          ),
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w700,
@@ -199,18 +202,23 @@ class _ServiceHistoryScreenState extends ConsumerState<ServiceHistoryScreen> {
                                             motorcycle.nickname,
                                             style: AppTypography.bodySmall,
                                           ),
-                                          const Text(' • ',
-                                              style: AppTypography.bodySmall),
+                                          const Text(
+                                            ' • ',
+                                            style: AppTypography.bodySmall,
+                                          ),
                                         ],
                                         Text(
                                           AppFormatters.formatKm(
-                                              rec.odometerKm),
+                                            rec.odometerKm,
+                                          ),
                                           style: AppTypography.bodySmall,
                                         ),
                                         if (rec.workshopName != null &&
                                             rec.workshopName!.isNotEmpty) ...[
-                                          const Text(' • ',
-                                              style: AppTypography.bodySmall),
+                                          const Text(
+                                            ' • ',
+                                            style: AppTypography.bodySmall,
+                                          ),
                                           Flexible(
                                             child: Text(
                                               rec.workshopName!,
@@ -253,8 +261,9 @@ class _ServiceHistoryScreenState extends ConsumerState<ServiceHistoryScreen> {
       final originalPath = record.attachments.first.localPath;
       final thumbPath = AttachmentStorageService.getThumbnailPath(originalPath);
       final thumbFile = File(thumbPath);
-      final displayFile =
-          thumbFile.existsSync() ? thumbFile : File(originalPath);
+      final displayFile = thumbFile.existsSync()
+          ? thumbFile
+          : File(originalPath);
 
       return ClipRRect(
         borderRadius: BorderRadius.circular(10),
@@ -268,8 +277,10 @@ class _ServiceHistoryScreenState extends ConsumerState<ServiceHistoryScreen> {
                   fit: BoxFit.cover,
                   cacheWidth: 150,
                   errorBuilder: (_, __, ___) {
-                    return const Icon(Icons.receipt_rounded,
-                        color: AppColors.textMuted);
+                    return const Icon(
+                      Icons.receipt_rounded,
+                      color: AppColors.textMuted,
+                    );
                   },
                 )
               : const Icon(Icons.receipt_rounded, color: AppColors.textMuted),
@@ -284,8 +295,11 @@ class _ServiceHistoryScreenState extends ConsumerState<ServiceHistoryScreen> {
         color: AppColors.primaryContainer.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(10),
       ),
-      child:
-          const Icon(Icons.build_rounded, color: AppColors.primary, size: 24),
+      child: const Icon(
+        Icons.build_rounded,
+        color: AppColors.primary,
+        size: 24,
+      ),
     );
   }
 }

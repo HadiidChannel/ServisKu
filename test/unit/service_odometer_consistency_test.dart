@@ -33,9 +33,7 @@ void main() {
   });
 
   group('Service Odometer Data Consistency Tests', () {
-    test(
-        'Creating service record links odometer reading and updates latest odometer',
-        () async {
+    test('Creating service record links odometer reading and updates latest odometer', () async {
       final today = DateTime.now();
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario',
@@ -58,8 +56,9 @@ void main() {
       final readings = await odoRepo.getReadings(motorId);
       expect(readings.length, 2);
 
-      final serviceReading =
-          readings.firstWhere((r) => r.serviceRecordId == result.recordId);
+      final serviceReading = readings.firstWhere(
+        (r) => r.serviceRecordId == result.recordId,
+      );
       expect(serviceReading.odometerKm, 2500);
       expect(serviceReading.source, AppConstants.odoSourceService);
       expect(serviceReading.serviceRecordId, result.recordId);
@@ -68,9 +67,7 @@ void main() {
       expect(motor?.currentOdometerKm, 2500);
     });
 
-    test(
-        'Editing service record updates linked odometer reading without creating duplicates',
-        () async {
+    test('Editing service record updates linked odometer reading without creating duplicates', () async {
       final today = DateTime.now();
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario',
@@ -105,17 +102,16 @@ void main() {
       final readings = await odoRepo.getReadings(motorId);
       expect(readings.length, 2); // Initial and updated service reading
 
-      final updatedReading =
-          readings.firstWhere((r) => r.serviceRecordId == result.recordId);
+      final updatedReading = readings.firstWhere(
+        (r) => r.serviceRecordId == result.recordId,
+      );
       expect(updatedReading.odometerKm, 2800);
 
       final motor = await motorcycleRepo.getById(motorId);
       expect(motor?.currentOdometerKm, 2800);
     });
 
-    test(
-        'Deleting service record removes linked odometer reading and restores prior odometer',
-        () async {
+    test('Deleting service record removes linked odometer reading and restores prior odometer', () async {
       final today = DateTime.now();
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario',
@@ -152,15 +148,16 @@ void main() {
       final readings = await odoRepo.getReadings(motorId);
       expect(readings.length, 2); // Only initial (1000) and manual (1500)
       expect(
-          readings.any((r) => r.serviceRecordId == result.recordId), isFalse);
+        readings.any((r) => r.serviceRecordId == result.recordId),
+        isFalse,
+      );
 
       // Current odometer reverts to latest manual reading (1500)
       motor = await motorcycleRepo.getById(motorId);
       expect(motor?.currentOdometerKm, 1500);
     });
 
-    test('Historical service record does not overwrite newer manual reading',
-        () async {
+    test('Historical service record does not overwrite newer manual reading', () async {
       final today = DateTime.now();
       final twoDaysAgo = today.subtract(const Duration(days: 2));
       final motorId = await motorcycleRepo.createMotorcycle(
@@ -195,9 +192,7 @@ void main() {
       expect(motor?.currentOdometerKm, 5000);
     });
 
-    test(
-        'Historical service record higher than subsequent initial reading is rejected',
-        () async {
+    test('Historical service record higher than subsequent initial reading is rejected', () async {
       final today = DateTime.now();
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario',

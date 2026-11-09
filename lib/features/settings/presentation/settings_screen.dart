@@ -8,6 +8,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_typography.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/confirmation_dialog.dart';
+import '../data/settings_repository.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -44,42 +45,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _toggleNotifications(bool value) async {
-    setState(() => _notificationsEnabled = value);
     final settingsRepo = ref.read(settingsRepositoryProvider);
-    await settingsRepo.setNotificationsEnabled(value);
+    final result = await settingsRepo.setNotificationsEnabled(value);
 
-    if (value) {
-      final notifService = ref.read(notificationServiceProvider);
-      var granted = await notifService.areNotificationsEnabled();
-      if (!granted) {
-        granted = await notifService.requestPermission();
-      }
-      if (mounted) {
-        setState(() => _hasDevicePermission = granted);
-      }
-      if (granted) {
-        await ref.read(notificationReconcilerProvider).reconcileAll();
-      }
+    if (!mounted) return;
+
+    if (result.status == NotificationToggleStatus.permissionDenied) {
+      setState(() {
+        _notificationsEnabled = false;
+        _hasDevicePermission = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.message ?? 'Izin notifikasi belum diberikan. Pengingat tetap dapat dilihat di aplikasi.',
+          ),
+        ),
+      );
+    } else if (result.status == NotificationToggleStatus.cancelFailed) {
+      setState(() {
+        _notificationsEnabled = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.message ??
+                'Sebagian pengingat di sistem Android gagal dibatalkan.',
+          ),
+        ),
+      );
+    } else if (result.status == NotificationToggleStatus.enabled) {
+      setState(() {
+        _notificationsEnabled = true;
+        _hasDevicePermission = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pengingat servis berhasil diaktifkan.')),
+      );
+    } else if (result.status == NotificationToggleStatus.disabled) {
+      setState(() {
+        _notificationsEnabled = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pengingat servis dinonaktifkan.')),
+      );
     }
   }
 
   Future<void> _requestNotificationPermission() async {
-    final granted =
-        await ref.read(notificationServiceProvider).requestPermission();
-    setState(() => _hasDevicePermission = granted);
-
-    if (granted) {
-      await ref.read(notificationReconcilerProvider).reconcileAll();
-    }
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(granted
-            ? 'Izin notifikasi telah diberikan.'
-            : 'Izin notifikasi belum diberikan. Pengingat tetap dapat dilihat di aplikasi.'),
-      ),
-    );
+    await _toggleNotifications(true);
   }
 
   Future<void> _confirmClearAllData() async {
@@ -87,8 +101,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final firstConfirm = await ConfirmationDialog.show(
       context,
       title: 'Hapus Seluruh Data?',
-      message:
-          'Seluruh data kendaraan, pembacaan kilometer, jadwal perawatan, riwayat servis, foto nota, dan preferensi aplikasi akan dihapus secara permanen dari perangkat ini.',
+      message: 'Seluruh data kendaraan, pembacaan kilometer, jadwal perawatan, riwayat servis, foto nota, dan preferensi aplikasi akan dihapus secara permanen dari perangkat ini.',
       confirmLabel: 'Lanjut Hapus',
       cancelLabel: 'Batal',
       isDestructive: true,
@@ -100,8 +113,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final finalConfirm = await ConfirmationDialog.show(
       context,
       title: 'Konfirmasi Penghapusan Akhir',
-      message:
-          'Tindakan ini tidak dapat dibatalkan. Apakah Anda benar-benar yakin ingin mengosongkan seluruh data aplikasi ServisKu?',
+      message: 'Tindakan ini tidak dapat dibatalkan. Apakah Anda benar-benar yakin ingin mengosongkan seluruh data aplikasi ServisKu?',
       confirmLabel: 'Hapus Semua Data',
       cancelLabel: 'Batal',
       isDestructive: true,
@@ -115,7 +127,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                result.errorMessage ?? 'Gagal menghapus database aplikasi.'),
+              result.errorMessage ?? 'Gagal menghapus database aplikasi.',
+            ),
             backgroundColor: AppColors.statusTerlambat,
           ),
         );
@@ -126,7 +139,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                'Data database telah dihapus, namun sebagian berkas foto tidak dapat dibersihkan secara fisik.'),
+              'Data database telah dihapus, namun sebagian berkas foto tidak dapat dibersihkan secara fisik.',
+            ),
           ),
         );
       } else {
@@ -141,30 +155,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pengaturan'),
-      ),
+      appBar: AppBar(title: const Text('Pengaturan')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // Section: Pengingat & Notifikasi
-          const Text('Pengingat & Notifikasi',
-              style: AppTypography.headlineSmall),
+          const Text(
+            'Pengingat & Notifikasi',
+            style: AppTypography.headlineSmall,
+          ),
           const SizedBox(height: 8),
           Card(
             child: Column(
               children: [
                 SwitchListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  title: const Text('Aktifkan Pengingat Lokal',
-                      style: AppTypography.titleSmall),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
+                  title: const Text(
+                    'Aktifkan Pengingat Lokal',
+                    style: AppTypography.titleSmall,
+                  ),
                   subtitle: const Text(
                     'Jadwalkan pemberitahuan saat jarak atau tanggal servis mendekati jatuh tempo.',
                     style: AppTypography.bodySmall,
@@ -175,19 +191,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  title: const Text('Status Izin Perangkat',
-                      style: AppTypography.titleSmall),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
+                  title: const Text(
+                    'Status Izin Perangkat',
+                    style: AppTypography.titleSmall,
+                  ),
                   subtitle: Text(
-                    _hasDevicePermission
-                        ? 'Izin notifikasi Android aktif.'
-                        : 'Izin belum diberikan. Pengingat tetap dapat dipantau dari aplikasi.',
+                    _hasDevicePermission ? 'Izin notifikasi Android aktif.' : 'Izin belum diberikan. Pengingat tetap dapat dipantau dari aplikasi.',
                     style: AppTypography.bodySmall,
                   ),
                   trailing: _hasDevicePermission
-                      ? const Icon(Icons.check_circle_rounded,
-                          color: AppColors.statusAman)
+                      ? const Icon(
+                          Icons.check_circle_rounded,
+                          color: AppColors.statusAman,
+                        )
                       : OutlinedButton(
                           onPressed: _requestNotificationPermission,
                           child: const Text('Minta Izin'),
@@ -199,8 +219,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 24),
 
           // Section: Informasi Aplikasi & Privasi
-          const Text('Informasi Aplikasi & Privasi',
-              style: AppTypography.headlineSmall),
+          const Text(
+            'Informasi Aplikasi & Privasi',
+            style: AppTypography.headlineSmall,
+          ),
           const SizedBox(height: 8),
           Card(
             child: Padding(
@@ -212,8 +234,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Versi Aplikasi', style: AppTypography.titleSmall),
-                      Text(AppConstants.appVersion,
-                          style: AppTypography.bodyMedium),
+                      Text(
+                        AppConstants.appVersion,
+                        style: AppTypography.bodyMedium,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -221,13 +245,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Platform', style: AppTypography.titleSmall),
-                      Text('Android Offline-first',
-                          style: AppTypography.bodyMedium),
+                      Text(
+                        'Android Offline-first',
+                        style: AppTypography.bodyMedium,
+                      ),
                     ],
                   ),
                   const Divider(height: 24),
-                  const Text('Penyimpanan Data Lokal',
-                      style: AppTypography.titleSmall),
+                  const Text(
+                    'Penyimpanan Data Lokal',
+                    style: AppTypography.titleSmall,
+                  ),
                   const SizedBox(height: 4),
                   const Text(
                     'Seluruh data sepeda motor, catatan odometer, jadwal perawatan, riwayat servis, dan foto nota bukti pembayaran Anda disimpan secara privat di dalam penyimpanan lokal perangkat ini.',
@@ -248,8 +276,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: const Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.info_outline_rounded,
-                            size: 20, color: AppColors.primaryDark),
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 20,
+                          color: AppColors.primaryDark,
+                        ),
                         SizedBox(width: 10),
                         Expanded(
                           child: Text(
@@ -271,8 +302,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 24),
 
           // Section: Zona Bahaya / Hapus Data
-          const Text('Zona Pengelolaan Data',
-              style: AppTypography.headlineSmall),
+          const Text(
+            'Zona Pengelolaan Data',
+            style: AppTypography.headlineSmall,
+          ),
           const SizedBox(height: 8),
           Card(
             child: Padding(
@@ -280,11 +313,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Hapus Seluruh Data Aplikasi',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.statusTerlambat)),
+                  const Text(
+                    'Hapus Seluruh Data Aplikasi',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.statusTerlambat,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   const Text(
                     'Kosongkan semua data kendaraan, jadwal, riwayat servis, foto, dan preferensi untuk memulai kembali dari awal.',
@@ -293,13 +329,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: 14),
                   OutlinedButton.icon(
                     onPressed: _confirmClearAllData,
-                    icon: const Icon(Icons.delete_forever_rounded,
-                        color: AppColors.statusTerlambat),
+                    icon: const Icon(
+                      Icons.delete_forever_rounded,
+                      color: AppColors.statusTerlambat,
+                    ),
                     label: const Text('Hapus Seluruh Data'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.statusTerlambat,
                       side: const BorderSide(
-                          color: AppColors.statusTerlambat, width: 1.5),
+                        color: AppColors.statusTerlambat,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ],

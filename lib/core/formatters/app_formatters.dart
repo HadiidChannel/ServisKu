@@ -7,8 +7,9 @@ class AppFormatters {
     decimalDigits: 0,
   );
 
-  static final NumberFormat _numberFormat =
-      NumberFormat.decimalPattern('id_ID');
+  static final NumberFormat _numberFormat = NumberFormat.decimalPattern(
+    'id_ID',
+  );
 
   static String formatRupiah(int amount) {
     return _currencyFormat.format(amount).trim();

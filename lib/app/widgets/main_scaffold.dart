@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../core/constants/app_constants.dart';
 import '../../database/app_database.dart';
 import '../providers/app_providers.dart';
@@ -9,10 +10,7 @@ import '../theme/app_colors.dart';
 class MainScaffold extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
 
-  const MainScaffold({
-    super.key,
-    required this.navigationShell,
-  });
+  const MainScaffold({super.key, required this.navigationShell});
 
   @override
   ConsumerState<MainScaffold> createState() => _MainScaffoldState();
@@ -48,12 +46,16 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
       final currentTz = await notifService.getCurrentTimezone();
 
       final db = ref.read(databaseProvider);
-      final storedTzSetting = await (db.select(db.appSettings)
-            ..where((tbl) => tbl.key.equals(AppConstants.keyLastKnownTimezone)))
-          .getSingleOrNull();
+      final storedTzSetting =
+          await (db.select(db.appSettings)..where(
+                (tbl) => tbl.key.equals(AppConstants.keyLastKnownTimezone),
+              ))
+              .getSingleOrNull();
 
       if (storedTzSetting == null) {
-        await db.into(db.appSettings).insertOnConflictUpdate(
+        await db
+            .into(db.appSettings)
+            .insertOnConflictUpdate(
               AppSettingsCompanion.insert(
                 key: AppConstants.keyLastKnownTimezone,
                 value: currentTz,
@@ -104,26 +106,34 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
-            selectedIcon:
-                Icon(Icons.home_rounded, color: AppColors.primaryDark),
+            selectedIcon: Icon(
+              Icons.home_rounded,
+              color: AppColors.primaryDark,
+            ),
             label: 'Beranda',
           ),
           NavigationDestination(
             icon: Icon(Icons.two_wheeler_outlined),
-            selectedIcon:
-                Icon(Icons.two_wheeler_rounded, color: AppColors.primaryDark),
+            selectedIcon: Icon(
+              Icons.two_wheeler_rounded,
+              color: AppColors.primaryDark,
+            ),
             label: 'Kendaraan',
           ),
           NavigationDestination(
             icon: Icon(Icons.history_outlined),
-            selectedIcon:
-                Icon(Icons.history_rounded, color: AppColors.primaryDark),
+            selectedIcon: Icon(
+              Icons.history_rounded,
+              color: AppColors.primaryDark,
+            ),
             label: 'Riwayat',
           ),
           NavigationDestination(
             icon: Icon(Icons.bar_chart_outlined),
-            selectedIcon:
-                Icon(Icons.bar_chart_rounded, color: AppColors.primaryDark),
+            selectedIcon: Icon(
+              Icons.bar_chart_rounded,
+              color: AppColors.primaryDark,
+            ),
             label: 'Laporan',
           ),
         ],

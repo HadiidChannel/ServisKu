@@ -1,14 +1,12 @@
 import 'package:drift/drift.dart';
+
 import 'service_records_table.dart';
 
 @DataClassName('ServiceAttachmentRow')
 class ServiceAttachments extends Table {
   TextColumn get id => text()();
-  TextColumn get serviceRecordId => text().references(
-        ServiceRecords,
-        #id,
-        onDelete: KeyAction.cascade,
-      )();
+  TextColumn get serviceRecordId =>
+      text().references(ServiceRecords, #id, onDelete: KeyAction.cascade)();
   TextColumn get localPath => text()();
   TextColumn get fileName => text()();
   TextColumn get mimeType => text()();

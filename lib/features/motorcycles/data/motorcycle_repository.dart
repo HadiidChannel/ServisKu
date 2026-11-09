@@ -36,8 +36,11 @@ class MotorcycleRepository {
     this.attachmentService,
   });
 
-  Motorcycle _toDomain(MotorcycleRow row,
-      {int currentOdometerKm = 0, DateTime? lastOdometerUpdate}) {
+  Motorcycle _toDomain(
+    MotorcycleRow row, {
+    int currentOdometerKm = 0,
+    DateTime? lastOdometerUpdate,
+  }) {
     return Motorcycle(
       id: row.id,
       nickname: row.nickname,
@@ -111,8 +114,13 @@ class MotorcycleRepository {
     for (final row in rows) {
       final currentKm = await _getLatestOdometerKm(row.id);
       final lastUpdate = await _getLatestOdometerDate(row.id);
-      list.add(_toDomain(row,
-          currentOdometerKm: currentKm, lastOdometerUpdate: lastUpdate));
+      list.add(
+        _toDomain(
+          row,
+          currentOdometerKm: currentKm,
+          lastOdometerUpdate: lastUpdate,
+        ),
+      );
     }
     return list;
   }
@@ -124,8 +132,11 @@ class MotorcycleRepository {
 
     final currentKm = await _getLatestOdometerKm(row.id);
     final lastUpdate = await _getLatestOdometerDate(row.id);
-    return _toDomain(row,
-        currentOdometerKm: currentKm, lastOdometerUpdate: lastUpdate);
+    return _toDomain(
+      row,
+      currentOdometerKm: currentKm,
+      lastOdometerUpdate: lastUpdate,
+    );
   }
 
   Future<String> createMotorcycle({
@@ -147,7 +158,9 @@ class MotorcycleRepository {
     final todayStr = AppFormatters.formatDateBusiness(readingDateTime);
 
     await db.transaction(() async {
-      await db.into(db.motorcycles).insert(
+      await db
+          .into(db.motorcycles)
+          .insert(
             MotorcyclesCompanion.insert(
               id: motorcycleId,
               nickname: nickname.trim(),
@@ -163,7 +176,9 @@ class MotorcycleRepository {
             ),
           );
 
-      await db.into(db.odometerReadings).insert(
+      await db
+          .into(db.odometerReadings)
+          .insert(
             OdometerReadingsCompanion.insert(
               id: odoId,
               motorcycleId: motorcycleId,
@@ -175,13 +190,16 @@ class MotorcycleRepository {
             ),
           );
 
-      final existingActive = await (db.select(db.appSettings)
-            ..where(
-                (tbl) => tbl.key.equals(AppConstants.keyActiveMotorcycleId)))
-          .getSingleOrNull();
+      final existingActive =
+          await (db.select(db.appSettings)..where(
+                (tbl) => tbl.key.equals(AppConstants.keyActiveMotorcycleId),
+              ))
+              .getSingleOrNull();
 
       if (existingActive == null || existingActive.value.isEmpty) {
-        await db.into(db.appSettings).insertOnConflictUpdate(
+        await db
+            .into(db.appSettings)
+            .insertOnConflictUpdate(
               AppSettingsCompanion.insert(
                 key: AppConstants.keyActiveMotorcycleId,
                 value: motorcycleId,
@@ -196,9 +214,9 @@ class MotorcycleRepository {
 
   Future<void> updateMotorcycle(Motorcycle motorcycle) async {
     final nowIso = DateTime.now().toIso8601String();
-    await (db.update(db.motorcycles)
-          ..where((tbl) => tbl.id.equals(motorcycle.id)))
-        .write(
+    await (db.update(
+      db.motorcycles,
+    )..where((tbl) => tbl.id.equals(motorcycle.id))).write(
       MotorcyclesCompanion(
         nickname: Value(motorcycle.nickname.trim()),
         brand: Value(motorcycle.brand.trim()),
@@ -216,8 +234,8 @@ class MotorcycleRepository {
   Future<MotorcycleDeletionResult> deleteMotorcycle(String id) async {
     // 1. Cancel all notifications for all schedules of this motorcycle before deleting database records
     if (notificationReconciler != null) {
-      final cancelResult =
-          await notificationReconciler!.cancelJobsForMotorcycle(id);
+      final cancelResult = await notificationReconciler!
+          .cancelJobsForMotorcycle(id);
       if (!cancelResult.isSuccess) {
         return MotorcycleDeletionResult(
           databaseSuccess: false,
@@ -231,16 +249,16 @@ class MotorcycleRepository {
     }
 
     // 2. Query all service records and attachments before database cascade deletes them
-    final records = await (db.select(db.serviceRecords)
-          ..where((tbl) => tbl.motorcycleId.equals(id)))
-        .get();
+    final records = await (db.select(
+      db.serviceRecords,
+    )..where((tbl) => tbl.motorcycleId.equals(id))).get();
     final recordIds = records.map((r) => r.id).toList();
 
     List<ServiceAttachmentRow> attachments = [];
     if (recordIds.isNotEmpty) {
-      attachments = await (db.select(db.serviceAttachments)
-            ..where((tbl) => tbl.serviceRecordId.isIn(recordIds)))
-          .get();
+      attachments = await (db.select(
+        db.serviceAttachments,
+      )..where((tbl) => tbl.serviceRecordId.isIn(recordIds))).get();
     }
 
     // 3. Delete motorcycle and cascade records in transaction
@@ -248,27 +266,28 @@ class MotorcycleRepository {
       await (db.delete(db.motorcycles)..where((tbl) => tbl.id.equals(id))).go();
 
       // If active motorcycle was deleted, update active setting
-      final activeSetting = await (db.select(db.appSettings)
-            ..where(
-                (tbl) => tbl.key.equals(AppConstants.keyActiveMotorcycleId)))
-          .getSingleOrNull();
+      final activeSetting =
+          await (db.select(db.appSettings)..where(
+                (tbl) => tbl.key.equals(AppConstants.keyActiveMotorcycleId),
+              ))
+              .getSingleOrNull();
 
       if (activeSetting?.value == id) {
         final remaining = await db.select(db.motorcycles).get();
         if (remaining.isNotEmpty) {
-          await (db.update(db.appSettings)
-                ..where((tbl) =>
-                    tbl.key.equals(AppConstants.keyActiveMotorcycleId)))
+          await (db.update(db.appSettings)..where(
+                (tbl) => tbl.key.equals(AppConstants.keyActiveMotorcycleId),
+              ))
               .write(
-            AppSettingsCompanion(
-              value: Value(remaining.first.id),
-              updatedAt: Value(DateTime.now().toIso8601String()),
-            ),
-          );
+                AppSettingsCompanion(
+                  value: Value(remaining.first.id),
+                  updatedAt: Value(DateTime.now().toIso8601String()),
+                ),
+              );
         } else {
-          await (db.delete(db.appSettings)
-                ..where((tbl) =>
-                    tbl.key.equals(AppConstants.keyActiveMotorcycleId)))
+          await (db.delete(db.appSettings)..where(
+                (tbl) => tbl.key.equals(AppConstants.keyActiveMotorcycleId),
+              ))
               .go();
         }
       }
@@ -283,8 +302,9 @@ class MotorcycleRepository {
       }
     }
     for (final rId in recordIds) {
-      final res =
-          await attachmentService?.deleteRecordAttachmentsDirectory(rId);
+      final res = await attachmentService?.deleteRecordAttachmentsDirectory(
+        rId,
+      );
       if (res != null && !res.isComplete) {
         attachmentsCleaned = false;
       }

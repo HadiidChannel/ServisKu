@@ -21,9 +21,7 @@ class MotorcycleListScreen extends ConsumerWidget {
     final activeId = ref.watch(activeMotorcycleIdProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kendaraan Saya'),
-      ),
+      appBar: AppBar(title: const Text('Kendaraan Saya')),
       body: motorcyclesAsync.when(
         data: (list) {
           if (list.isEmpty) {
@@ -35,8 +33,7 @@ class MotorcycleListScreen extends ConsumerWidget {
                   children: [
                     const EmptyIllustrationWidget(
                       title: 'Belum Ada Motor',
-                      subtitle:
-                          'Tambahkan sepeda motor Anda untuk mulai mengelola jadwal dan servis.',
+                      subtitle: 'Tambahkan sepeda motor Anda untuk mulai mengelola jadwal dan servis.',
                       icon: Icons.two_wheeler_rounded,
                     ),
                     const SizedBox(height: 24),
@@ -107,11 +104,14 @@ class MotorcycleListScreen extends ConsumerWidget {
                                         const SizedBox(width: 8),
                                         Container(
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 3),
+                                            horizontal: 8,
+                                            vertical: 3,
+                                          ),
                                           decoration: BoxDecoration(
                                             color: AppColors.primary,
-                                            borderRadius:
-                                                BorderRadius.circular(6),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
                                           ),
                                           child: const Text(
                                             'Aktif',
@@ -144,7 +144,8 @@ class MotorcycleListScreen extends ConsumerWidget {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (_) => AddEditMotorcycleScreen(
-                                          motorcycle: m),
+                                        motorcycle: m,
+                                      ),
                                     ),
                                   );
                                 } else if (val == 'delete') {
@@ -157,8 +158,10 @@ class MotorcycleListScreen extends ConsumerWidget {
                                     value: 'activate',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.check_circle_outline_rounded,
-                                            size: 20),
+                                        Icon(
+                                          Icons.check_circle_outline_rounded,
+                                          size: 20,
+                                        ),
                                         SizedBox(width: 10),
                                         Text('Jadikan Aktif'),
                                       ],
@@ -178,14 +181,18 @@ class MotorcycleListScreen extends ConsumerWidget {
                                   value: 'delete',
                                   child: Row(
                                     children: [
-                                      Icon(Icons.delete_outline_rounded,
-                                          size: 20,
-                                          color: AppColors.statusTerlambat),
+                                      Icon(
+                                        Icons.delete_outline_rounded,
+                                        size: 20,
+                                        color: AppColors.statusTerlambat,
+                                      ),
                                       SizedBox(width: 10),
-                                      Text('Hapus Motor',
-                                          style: TextStyle(
-                                              color:
-                                                  AppColors.statusTerlambat)),
+                                      Text(
+                                        'Hapus Motor',
+                                        style: TextStyle(
+                                          color: AppColors.statusTerlambat,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -251,8 +258,7 @@ class MotorcycleListScreen extends ConsumerWidget {
     final confirmed = await ConfirmationDialog.show(
       context,
       title: 'Hapus ${motorcycle.nickname}?',
-      message:
-          'Seluruh data jadwal perawatan, riwayat servis, pembacaan kilometer, dan foto nota untuk motor ini akan dihapus secara permanen.',
+      message: 'Seluruh data jadwal perawatan, riwayat servis, pembacaan kilometer, dan foto nota untuk motor ini akan dihapus secara permanen.',
       confirmLabel: 'Hapus Motor',
       cancelLabel: 'Batal',
       isDestructive: true,
@@ -265,9 +271,11 @@ class MotorcycleListScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result.attachmentsCleaned
-                ? '${motorcycle.nickname} dan seluruh berkas berhasil dihapus.'
-                : '${motorcycle.nickname} dihapus, sebagian foto tidak dapat dibersihkan.'),
+            content: Text(
+              result.attachmentsCleaned
+                  ? '${motorcycle.nickname} dan seluruh berkas berhasil dihapus.'
+                  : '${motorcycle.nickname} dihapus, sebagian foto tidak dapat dibersihkan.',
+            ),
           ),
         );
       }

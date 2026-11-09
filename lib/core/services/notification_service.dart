@@ -5,25 +5,28 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../constants/app_constants.dart';
 
-enum NotificationScheduleStatus {
-  scheduled,
-  deliveredImmediate,
-  failed,
-}
+enum NotificationScheduleStatus { scheduled, deliveredImmediate, failed }
 
 class NotificationScheduleResult {
   final NotificationScheduleStatus status;
   final String? errorMessage;
 
-  const NotificationScheduleResult({
-    required this.status,
-    this.errorMessage,
-  });
+  const NotificationScheduleResult({required this.status, this.errorMessage});
 
   bool get isSuccess => status != NotificationScheduleStatus.failed;
   bool get isDeliveredImmediate =>
       status == NotificationScheduleStatus.deliveredImmediate;
   bool get isScheduled => status == NotificationScheduleStatus.scheduled;
+
+  static const success = NotificationScheduleResult(
+    status: NotificationScheduleStatus.scheduled,
+  );
+
+  static NotificationScheduleResult failure(String message, [int? id]) =>
+      NotificationScheduleResult(
+        status: NotificationScheduleStatus.failed,
+        errorMessage: message,
+      );
 }
 
 class NotificationCancelResult {
@@ -52,7 +55,7 @@ class NotificationService {
   bool _initialized = false;
 
   NotificationService({FlutterLocalNotificationsPlugin? plugin})
-      : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+    : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   static const String channelId = 'servisku_maintenance_reminders';
   static const String channelName = 'Pengingat Perawatan ServisKu';
@@ -93,8 +96,9 @@ class NotificationService {
 
     await configureLocalTimezone();
 
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const initSettings = InitializationSettings(android: androidSettings);
 
     await _plugin.initialize(initSettings);
@@ -106,8 +110,10 @@ class NotificationService {
       importance: Importance.high,
     );
 
-    final androidImplementation = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final androidImplementation = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
     await androidImplementation?.createNotificationChannel(androidChannel);
 
@@ -115,17 +121,21 @@ class NotificationService {
   }
 
   Future<bool> requestPermission() async {
-    final androidImplementation = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final androidImplementation = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
-    final granted =
-        await androidImplementation?.requestNotificationsPermission();
+    final granted = await androidImplementation
+        ?.requestNotificationsPermission();
     return granted ?? false;
   }
 
   Future<bool> areNotificationsEnabled() async {
-    final androidImplementation = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final androidImplementation = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     final enabled = await androidImplementation?.areNotificationsEnabled();
     return enabled ?? false;
   }
@@ -158,12 +168,7 @@ class NotificationService {
 
       const notificationDetails = NotificationDetails(android: androidDetails);
 
-      await _plugin.show(
-        id,
-        title,
-        body,
-        notificationDetails,
-      );
+      await _plugin.show(id, title, body, notificationDetails);
       return true;
     } catch (_) {
       return false;

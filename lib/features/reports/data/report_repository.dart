@@ -12,10 +12,7 @@ class ReportRepository {
   final AppDatabase db;
   final ServiceRecordRepository serviceRecordRepository;
 
-  ReportRepository({
-    required this.db,
-    required this.serviceRecordRepository,
-  });
+  ReportRepository({required this.db, required this.serviceRecordRepository});
 
   Future<int> getCurrentMonthExpense(String motorcycleId) async {
     final now = DateTime.now();
@@ -25,18 +22,20 @@ class ReportRepository {
     final startStr = AppFormatters.formatDateBusiness(startOfMonth);
     final endStr = AppFormatters.formatDateBusiness(endOfMonth);
 
-    final rows = await db.customSelect(
-      'SELECT sr.id, sr.additional_cost, '
-      'COALESCE((SELECT SUM(sri.item_cost) FROM service_record_items sri WHERE sri.service_record_id = sr.id), 0) AS items_cost '
-      'FROM service_records sr '
-      'WHERE sr.motorcycle_id = ? AND sr.service_date >= ? AND sr.service_date <= ?;',
-      variables: [
-        Variable.withString(motorcycleId),
-        Variable.withString(startStr),
-        Variable.withString(endStr),
-      ],
-      readsFrom: {db.serviceRecords, db.serviceRecordItems},
-    ).get();
+    final rows = await db
+        .customSelect(
+          'SELECT sr.id, sr.additional_cost, '
+          'COALESCE((SELECT SUM(sri.item_cost) FROM service_record_items sri WHERE sri.service_record_id = sr.id), 0) AS items_cost '
+          'FROM service_records sr '
+          'WHERE sr.motorcycle_id = ? AND sr.service_date >= ? AND sr.service_date <= ?;',
+          variables: [
+            Variable.withString(motorcycleId),
+            Variable.withString(startStr),
+            Variable.withString(endStr),
+          ],
+          readsFrom: {db.serviceRecords, db.serviceRecordItems},
+        )
+        .get();
 
     int total = 0;
     for (final row in rows) {
@@ -197,12 +196,14 @@ class ReportRepository {
     final itemsByRecord = <String, List<ServiceRecordItem>>{};
     if (recordRows.isNotEmpty) {
       final recordIds = recordRows.map((r) => r.id).toList();
-      final itemRows = await (db.select(db.serviceRecordItems)
-            ..where((tbl) => tbl.serviceRecordId.isIn(recordIds)))
-          .get();
+      final itemRows = await (db.select(
+        db.serviceRecordItems,
+      )..where((tbl) => tbl.serviceRecordId.isIn(recordIds))).get();
 
       for (final itemRow in itemRows) {
-        itemsByRecord.putIfAbsent(itemRow.serviceRecordId, () => []).add(
+        itemsByRecord
+            .putIfAbsent(itemRow.serviceRecordId, () => [])
+            .add(
               ServiceRecordItem(
                 id: itemRow.id,
                 serviceRecordId: itemRow.serviceRecordId,
@@ -257,7 +258,7 @@ class ReportRepository {
     if (totalAdditionalCost > 0) {
       categoryTotals[AppConstants.categoryAdditionalCost] =
           (categoryTotals[AppConstants.categoryAdditionalCost] ?? 0) +
-              totalAdditionalCost;
+          totalAdditionalCost;
     }
 
     final monthlyExpensesList = <MonthlyExpense>[];
@@ -267,11 +268,9 @@ class ReportRepository {
     while (!cur.isAfter(endMonthDate)) {
       final monthKey = '${cur.year}-${cur.month.toString().padLeft(2, '0')}';
       final cost = monthlyTotals[monthKey] ?? 0;
-      monthlyExpensesList.add(MonthlyExpense(
-        year: cur.year,
-        month: cur.month,
-        totalCost: cost,
-      ));
+      monthlyExpensesList.add(
+        MonthlyExpense(year: cur.year, month: cur.month, totalCost: cost),
+      );
       if (cur.month == 12) {
         cur = DateTime(cur.year + 1, 1, 1);
       } else {
@@ -284,11 +283,9 @@ class ReportRepository {
       categoryTotals.forEach((cat, cost) {
         if (cost > 0) {
           final pct = (cost / totalCost) * 100.0;
-          categoryList.add(CategoryExpense(
-            category: cat,
-            totalCost: cost,
-            percentage: pct,
-          ));
+          categoryList.add(
+            CategoryExpense(category: cat, totalCost: cost, percentage: pct),
+          );
         }
       });
       categoryList.sort((a, b) => b.totalCost.compareTo(a.totalCost));

@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
+
 import '../../features/maintenance/domain/maintenance_schedule.dart';
 
 class StatusBadge extends StatelessWidget {
   final MaintenanceStatus status;
   final bool compact;
 
-  const StatusBadge({
-    super.key,
-    required this.status,
-    this.compact = false,
-  });
+  const StatusBadge({super.key, required this.status, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
     final disableAnimations = MediaQuery.of(context).disableAnimations;
 
     return AnimatedContainer(
-      duration:
-          disableAnimations ? Duration.zero : const Duration(milliseconds: 200),
+      duration: disableAnimations
+          ? Duration.zero
+          : const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 8 : 10,
@@ -34,11 +32,7 @@ class StatusBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            status.icon,
-            size: compact ? 12 : 14,
-            color: status.color,
-          ),
+          Icon(status.icon, size: compact ? 12 : 14, color: status.color),
           const SizedBox(width: 5),
           Text(
             status.label,

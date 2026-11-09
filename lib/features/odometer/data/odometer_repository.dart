@@ -74,13 +74,15 @@ class OdometerRepository {
   }) async {
     final existingReadings = await getReadings(motorcycleId);
     final chronologyItems = existingReadings
-        .map((r) => OdometerChronologyItem(
-              id: r.id,
-              readingDate: r.readingDate,
-              odometerKm: r.odometerKm,
-              createdAt: r.createdAt,
-              source: r.source,
-            ))
+        .map(
+          (r) => OdometerChronologyItem(
+            id: r.id,
+            readingDate: r.readingDate,
+            odometerKm: r.odometerKm,
+            createdAt: r.createdAt,
+            source: r.source,
+          ),
+        )
         .toList();
 
     AppValidators.validateOdometerChronology(
@@ -93,10 +95,13 @@ class OdometerRepository {
 
     final nowIso = DateTime.now().toIso8601String();
     final readingDateStr = AppFormatters.formatDateBusiness(readingDate);
-    final readingSource =
-        isCorrection ? AppConstants.odoSourceCorrection : source;
+    final readingSource = isCorrection
+        ? AppConstants.odoSourceCorrection
+        : source;
 
-    await db.into(db.odometerReadings).insert(
+    await db
+        .into(db.odometerReadings)
+        .insert(
           OdometerReadingsCompanion.insert(
             id: _uuid.v4(),
             motorcycleId: motorcycleId,

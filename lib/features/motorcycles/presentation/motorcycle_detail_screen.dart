@@ -16,10 +16,7 @@ import 'add_edit_motorcycle_screen.dart';
 class MotorcycleDetailScreen extends ConsumerWidget {
   final String motorcycleId;
 
-  const MotorcycleDetailScreen({
-    super.key,
-    required this.motorcycleId,
-  });
+  const MotorcycleDetailScreen({super.key, required this.motorcycleId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,8 +34,11 @@ class MotorcycleDetailScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.search_off_rounded,
-                        size: 64, color: AppColors.textMuted),
+                    const Icon(
+                      Icons.search_off_rounded,
+                      size: 64,
+                      color: AppColors.textMuted,
+                    ),
                     const SizedBox(height: 16),
                     const Text(
                       'Kendaraan tidak ditemukan.',
@@ -62,10 +62,12 @@ class MotorcycleDetailScreen extends ConsumerWidget {
         }
 
         final motorcycle = matches.first;
-        final schedulesAsync =
-            ref.watch(motorcycleSchedulesProvider(motorcycle.id));
-        final recordsAsync =
-            ref.watch(motorcycleServiceRecordsProvider(motorcycle.id));
+        final schedulesAsync = ref.watch(
+          motorcycleSchedulesProvider(motorcycle.id),
+        );
+        final recordsAsync = ref.watch(
+          motorcycleServiceRecordsProvider(motorcycle.id),
+        );
 
         final schedules = schedulesAsync.value ?? [];
         final records = recordsAsync.value ?? [];
@@ -93,8 +95,7 @@ class MotorcycleDetailScreen extends ConsumerWidget {
                   final confirmed = await ConfirmationDialog.show(
                     context,
                     title: 'Hapus ${motorcycle.nickname}?',
-                    message:
-                        'Seluruh jadwal, riwayat servis, odometer, dan foto bukti untuk motor ini akan dihapus secara permanen.',
+                    message: 'Seluruh jadwal, riwayat servis, odometer, dan foto bukti untuk motor ini akan dihapus secara permanen.',
                     confirmLabel: 'Hapus Motor',
                     cancelLabel: 'Batal',
                     isDestructive: true,
@@ -105,14 +106,27 @@ class MotorcycleDetailScreen extends ConsumerWidget {
                         .read(motorcycleRepositoryProvider)
                         .deleteMotorcycle(motorcycle.id);
                     if (context.mounted) {
-                      context.pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(result.attachmentsCleaned
-                              ? '${motorcycle.nickname} dan seluruh berkas berhasil dihapus.'
-                              : '${motorcycle.nickname} dihapus, sebagian foto tidak dapat dibersihkan.'),
-                        ),
-                      );
+                      if (result.databaseSuccess) {
+                        context.pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              result.attachmentsCleaned
+                                  ? '${motorcycle.nickname} dan seluruh berkas berhasil dihapus.'
+                                  : '${motorcycle.nickname} dihapus. Sebagian berkas lampiran akan dibersihkan di latar belakang.',
+                            ),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              result.errorMessage ??
+                                  'Gagal menghapus sepeda motor.',
+                            ),
+                          ),
+                        );
+                      }
                     }
                   }
                 },
@@ -156,7 +170,8 @@ class MotorcycleDetailScreen extends ConsumerWidget {
                               children: [
                                 Text(
                                   AppFormatters.formatKm(
-                                      motorcycle.currentOdometerKm),
+                                    motorcycle.currentOdometerKm,
+                                  ),
                                   style: AppTypography.headlineSmall.copyWith(
                                     color: AppColors.primary,
                                   ),
@@ -164,7 +179,8 @@ class MotorcycleDetailScreen extends ConsumerWidget {
                                 if (motorcycle.lastOdometerUpdate != null)
                                   Text(
                                     AppFormatters.formatDateIndonesian(
-                                        motorcycle.lastOdometerUpdate!),
+                                      motorcycle.lastOdometerUpdate!,
+                                    ),
                                     style: AppTypography.bodySmall,
                                   ),
                               ],
@@ -182,9 +198,8 @@ class MotorcycleDetailScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => context.push(
-                          '/vehicles/${motorcycle.id}/odometer',
-                        ),
+                        onPressed: () =>
+                            context.push('/vehicles/${motorcycle.id}/odometer'),
                         icon: const Icon(Icons.speed_rounded, size: 18),
                         label: const Text('Odometer'),
                       ),
@@ -195,8 +210,10 @@ class MotorcycleDetailScreen extends ConsumerWidget {
                         onPressed: () => context.push(
                           '/vehicles/${motorcycle.id}/maintenance',
                         ),
-                        icon:
-                            const Icon(Icons.calendar_today_rounded, size: 18),
+                        icon: const Icon(
+                          Icons.calendar_today_rounded,
+                          size: 18,
+                        ),
                         label: const Text('Jadwal'),
                       ),
                     ),
@@ -229,12 +246,16 @@ class MotorcycleDetailScreen extends ConsumerWidget {
                         _buildInfoRow('Tipe Motor', motorcycle.typeLabel),
                         _buildInfoRow('Penggerak', motorcycle.propulsionLabel),
                         if (motorcycle.manufactureYear != null)
-                          _buildInfoRow('Tahun Produksi',
-                              motorcycle.manufactureYear.toString()),
+                          _buildInfoRow(
+                            'Tahun Produksi',
+                            motorcycle.manufactureYear.toString(),
+                          ),
                         if (motorcycle.licensePlate != null &&
                             motorcycle.licensePlate!.isNotEmpty)
                           _buildInfoRow(
-                              'Nomor Polisi', motorcycle.licensePlate!),
+                            'Nomor Polisi',
+                            motorcycle.licensePlate!,
+                          ),
                         if (motorcycle.notes != null &&
                             motorcycle.notes!.isNotEmpty)
                           _buildInfoRow('Catatan', motorcycle.notes!),
@@ -253,8 +274,9 @@ class MotorcycleDetailScreen extends ConsumerWidget {
                       style: AppTypography.headlineSmall,
                     ),
                     TextButton(
-                      onPressed: () => context
-                          .push('/vehicles/${motorcycle.id}/maintenance'),
+                      onPressed: () => context.push(
+                        '/vehicles/${motorcycle.id}/maintenance',
+                      ),
                       child: const Text('Kelola'),
                     ),
                   ],
@@ -297,10 +319,14 @@ class MotorcycleDetailScreen extends ConsumerWidget {
                       return Card(
                         child: ListTile(
                           title: Text(s.name, style: AppTypography.titleSmall),
-                          subtitle:
-                              Text(calc.reason, style: AppTypography.bodySmall),
-                          trailing:
-                              StatusBadge(status: calc.status, compact: true),
+                          subtitle: Text(
+                            calc.reason,
+                            style: AppTypography.bodySmall,
+                          ),
+                          trailing: StatusBadge(
+                            status: calc.status,
+                            compact: true,
+                          ),
                         ),
                       );
                     },
@@ -342,8 +368,10 @@ class MotorcycleDetailScreen extends ConsumerWidget {
                         child: ListTile(
                           onTap: () =>
                               context.push('/service-records/${rec.id}'),
-                          title: Text(rec.itemsSummary,
-                              style: AppTypography.titleSmall),
+                          title: Text(
+                            rec.itemsSummary,
+                            style: AppTypography.titleSmall,
+                          ),
                           subtitle: Text(
                             '${AppFormatters.formatDateIndonesian(rec.serviceDate)} • ${AppFormatters.formatKm(rec.odometerKm)}',
                             style: AppTypography.bodySmall,
@@ -383,8 +411,9 @@ class MotorcycleDetailScreen extends ConsumerWidget {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: AppTypography.bodyMedium
-                  .copyWith(fontWeight: FontWeight.w600),
+              style: AppTypography.bodyMedium.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

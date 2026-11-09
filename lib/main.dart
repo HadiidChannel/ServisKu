@@ -5,9 +5,5 @@ import 'app/app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    const ProviderScope(
-      child: ServisKuApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: ServisKuApp()));
 }

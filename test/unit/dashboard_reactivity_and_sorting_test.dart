@@ -38,9 +38,7 @@ void main() {
   });
 
   group('Dashboard Reactivity & Priority Sorting Tests', () {
-    test(
-        'watchAll reactively emits updated current odometer when new odometer reading is added',
-        () async {
+    test('watchAll reactively emits updated current odometer when new odometer reading is added', () async {
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario',
         brand: 'Honda',
@@ -75,9 +73,7 @@ void main() {
       await subscription.cancel();
     });
 
-    test(
-        'Strict dashboard priority sorting orders Terlambat > Segera > Aman > Belum diatur',
-        () {
+    test('Strict dashboard priority sorting orders Terlambat > Segera > Aman > Belum diatur', () {
       final now = DateTime.now();
       final schedTerlambat = MaintenanceSchedule(
         id: '1',
@@ -126,22 +122,30 @@ void main() {
         DashboardScheduleItem(
           schedule: schedAman,
           calculation: MaintenanceCalculator.calculate(
-              schedule: schedAman, currentOdometerKm: currentOdo),
+            schedule: schedAman,
+            currentOdometerKm: currentOdo,
+          ),
         ),
         DashboardScheduleItem(
           schedule: schedBelumDiatur,
           calculation: MaintenanceCalculator.calculate(
-              schedule: schedBelumDiatur, currentOdometerKm: currentOdo),
+            schedule: schedBelumDiatur,
+            currentOdometerKm: currentOdo,
+          ),
         ),
         DashboardScheduleItem(
           schedule: schedTerlambat,
           calculation: MaintenanceCalculator.calculate(
-              schedule: schedTerlambat, currentOdometerKm: currentOdo),
+            schedule: schedTerlambat,
+            currentOdometerKm: currentOdo,
+          ),
         ),
         DashboardScheduleItem(
           schedule: schedSegera,
           calculation: MaintenanceCalculator.calculate(
-              schedule: schedSegera, currentOdometerKm: currentOdo),
+            schedule: schedSegera,
+            currentOdometerKm: currentOdo,
+          ),
         ),
       ];
 
@@ -154,9 +158,7 @@ void main() {
       expect(items[3].calculation.status, MaintenanceStatus.belumDiatur);
     });
 
-    test(
-        'Overdue priority sorting orders more severely overdue schedules before less overdue ones',
-        () {
+    test('Overdue priority sorting orders more severely overdue schedules before less overdue ones', () {
       final now = DateTime.now();
       // Schedule A: interval 2000 km, lastDone at 1000 km. At 4000 km, elapsed = 3000 km (150% progress, 1000 km overdue)
       final schedSevere = MaintenanceSchedule(
@@ -203,9 +205,7 @@ void main() {
       expect(items[1].schedule.name, 'Busi');
     });
 
-    test(
-        'Dashboard expense summary calculates month expense correctly and updates when records change',
-        () async {
+    test('Dashboard expense summary calculates month expense correctly and updates when records change', () async {
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario',
         brand: 'Honda',

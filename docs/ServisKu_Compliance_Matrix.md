@@ -8,9 +8,10 @@
 |---|---|
 | Sumber requirement produk | `PRD_ServisKu_v1.1.md` |
 | Sumber spesifikasi teknis | `FSD_ServisKu_v1.0.md` |
-| Snapshot source yang diperiksa | `servis(2).zip` dan `android(2).zip` |
-| Tanggal pemeriksaan source | 9 November 2026 |
-| Metode | Static source review, pemeriksaan konfigurasi, struktur test, dan cross-check ID PRD/FSD |
+| Dokumen audit temuan | `ServisKu_Audit_Pasca_Hardening_v3.md` |
+| Snapshot source yang diperiksa | `servis(3).zip`, `android(3).zip`, dan patch perbaikan 10 November 2026 |
+| Tanggal pemeriksaan source | 10 November 2026 |
+| Metode | Static source review, analisis kode, verifikasi automated test suite (95 tests), dan build APK Android |
 
 ### 1.1 Batas verifikasi
 
@@ -24,14 +25,15 @@
 
 | Status | Arti |
 |---|---|
-| Perlu perbaikan | Static review menemukan risiko atau defect yang berkaitan langsung dengan requirement. |
-| Sebagian | Sebagian mekanisme terlihat di source, tetapi masih ada gap yang dicatat. |
-| Teridentifikasi di source, belum diverifikasi | Implementasi atau komponennya ditemukan, tetapi acceptance criteria belum dibuktikan secara lengkap. |
-| Belum diverifikasi | Belum ada bukti yang cukup untuk menyimpulkan implementasi memenuhi requirement. |
+| Patuh | Implementasi nyata telah dibuktikan pada source code dan diverifikasi oleh automated tests yang lulus. |
+| Perlu perbaikan | Ditemukan cacat, risiko data, atau ketidaksesuaian spesifikasi yang masih memerlukan perbaikan. |
+| Sebagian | Sebagian mekanisme terlihat di source, namun masih ada gap yang dicatat. |
+| Teridentifikasi di source, belum diverifikasi | Implementasi atau komponennya ditemukan, namun acceptance criteria belum dibuktikan secara lengkap. |
+| Belum diverifikasi | Belum ada bukti satu-ke-satu yang cukup untuk menyimpulkan implementasi memenuhi requirement secara penuh. |
 | P1, belum diverifikasi | Fitur berada di luar prioritas P0 MVP dan status implementasinya belum diverifikasi. |
 | Kondisional P1, belum diverifikasi | Berlaku ketika fitur P1 terkait dirilis. |
 
-Tidak ada requirement yang diberi status `Patuh` dalam revisi ini. Status tersebut baru boleh diberikan setelah implementasi, acceptance test yang relevan, dan verifikasi runtime yang diperlukan memiliki bukti.
+Status `Patuh` diberikan hanya pada requirement yang telah memiliki bukti implementasi konkret dan pengujian otomasi yang lulus. Requirement P0 lainnya berstatus `Belum diverifikasi` hingga pengujian fisik atau acceptance test khusus ditambahkan.
 
 ## 2. Functional Requirements
 
@@ -77,7 +79,7 @@ Tidak ada requirement yang diberi status `Patuh` dalam revisi ini. Status terseb
 | ID PRD | Requirement asli dari PRD | Scope | Rujukan FSD | Status audit dan catatan |
 |---|---|---|---|---|
 | `FR-DASH-01` | Dashboard menampilkan kendaraan aktif beserta nama, model, dan kilometer terakhir. | P0 / lintas fitur | FSD 6.4, 7.4 | **Belum diverifikasi.** Belum ada bukti satu-ke-satu yang cukup untuk menyatakan requirement ini patuh. Periksa implementasi dan acceptance test terkait. |
-| `FR-DASH-02` | Dashboard menampilkan jumlah jadwal perawatan yang terlambat dan mendekati jatuh tempo. | P0 / lintas fitur | FSD 6.4, 7.4 | **Patuh.** Terverifikasi. DashboardSummary memiliki flag reaktif isLoading, hasSchedulesError, hasRecordsError, dan hasExpenseError. Dashboard menampilkan kartu error dengan tombol coba lagi saat fetch jadwal gagal. |
+| `FR-DASH-02` | Dashboard menampilkan jumlah jadwal perawatan yang terlambat dan mendekati jatuh tempo. | P0 / lintas fitur | FSD 6.4, 7.4 | **Patuh.** Terverifikasi. DashboardSummary memiliki flag reaktif isSchedulesLoading, isRecordsLoading, isExpenseLoading, serta penanganan error. DashboardScreen menampilkan skeleton loading per bagian (mencegah representasi keliru angka 0 atau data kosong saat loading) dan tombol coba lagi pada kondisi error (uji: dashboard loading state distinguishes loading from empty state, error states render retry buttons). |
 | `FR-DASH-03` | Dashboard menampilkan maksimal tiga jadwal yang paling perlu diperhatikan. | P0 / lintas fitur | FSD 6.4, 7.4 | **Patuh.** Terverifikasi. compareScheduleUrgency menggunakan unclampedProgress rasio keterlambatan murni untuk memprioritaskan jadwal yang terlambat lebih parah di posisi teratas (uji: Severe overdue schedule has higher priority than mild overdue schedule). |
 | `FR-DASH-04` | Dashboard menampilkan aktivitas servis terakhir. | P0 / lintas fitur | FSD 6.4, 7.4 | **Patuh.** Terverifikasi. DashboardScreen menampilkan aktivitas servis terakhir secara reaktif via dashboardSummaryProvider. |
 | `FR-DASH-05` | Dashboard menampilkan ringkasan biaya bulan berjalan untuk kendaraan aktif. | P0 / lintas fitur | FSD 6.4, 7.4 | **Patuh.** Terverifikasi. Pengeluaran bulan berjalan diagregasi langsung di SQLite dan error query ditangani secara khusus via hasExpenseError tanpa menyamarkannya sebagai Rp0. |
@@ -134,7 +136,7 @@ Tidak ada requirement yang diberi status `Patuh` dalam revisi ini. Status terseb
 | ID PRD | Requirement asli dari PRD | Scope | Rujukan FSD | Status audit dan catatan |
 |---|---|---|---|---|
 | `FR-NOT-01` | Aplikasi menggunakan notifikasi lokal perangkat, bukan layanan push server. | P0 / lintas fitur | FSD 7.8, 11 | **Belum diverifikasi.** Belum ada bukti satu-ke-satu yang cukup untuk menyatakan requirement ini patuh. Periksa implementasi dan acceptance test terkait. |
-| `FR-NOT-02` | Pengguna dapat mengaktifkan atau menonaktifkan pengingat. | P0 / lintas fitur | FSD 7.8, 11 | **Patuh.** Terverifikasi. Single-owner permission flow di SettingsScreen mengelola switch dan otorisasi izin OS tanpa duplikasi prompt dialog. |
+| `FR-NOT-02` | Pengguna dapat mengaktifkan atau menonaktifkan pengingat. | P0 / lintas fitur | FSD 7.8, 11 | **Patuh.** Terverifikasi. Single-owner permission flow dipusatkan di SettingsRepository.setNotificationsEnabled() yang mengelola otorisasi izin OS, pembatalan alarm, dan persistensi preferensi, mengembalikan NotificationToggleResult tanpa duplikasi prompt dialog di UI (uji: toggle notification permission single-owner flow). |
 | `FR-NOT-03` | Pengingat berbasis tanggal dapat dijadwalkan oleh aplikasi. | P0 / lintas fitur | FSD 7.8, 11 | **Patuh.** Terverifikasi. Penjadwalan tanggal menggunakan timezone perangkat. Perubahan timezone dideteksi saat resume aplikasi dan secara otomatis membatalkan serta menjadwalkan ulang seluruh alarm tanggal via handleTimezoneChanged() (uji: Timezone change reschedules date notifications and updates last known timezone). |
 | `FR-NOT-04` | Pengingat berbasis kilometer diperiksa ketika pengguna memperbarui odometer atau ketika aplikasi menghitung ulang status jadwal. | P0 / lintas fitur | FSD 7.8, 11 | **Teridentifikasi di source, belum diverifikasi.** Pemeriksaan status kilometer menggunakan dimensi km. Perlu uji alur end-to-end setelah pembaruan odometer dan resume aplikasi. |
 | `FR-NOT-05` | Pengguna dapat mengatur jarak pengingat sebelum jadwal, misalnya beberapa ratus kilometer sebelum jatuh tempo. | P0 / lintas fitur | FSD 7.8, 11 | **Belum diverifikasi.** Belum ada bukti satu-ke-satu yang cukup untuk menyatakan requirement ini patuh. Periksa implementasi dan acceptance test terkait. |
@@ -151,7 +153,7 @@ Tidak ada requirement yang diberi status `Patuh` dalam revisi ini. Status terseb
 | `FR-REP-01` | Aplikasi menghitung total biaya perawatan untuk kendaraan aktif. | P0 / lintas fitur | FSD 6.13, 7.9, 8.8 | **Belum diverifikasi.** Belum ada bukti satu-ke-satu yang cukup untuk menyatakan requirement ini patuh. Periksa implementasi dan acceptance test terkait. |
 | `FR-REP-02` | Pengguna dapat melihat total pengeluaran bulan berjalan. | P0 / lintas fitur | FSD 6.13, 7.9, 8.8 | **Belum diverifikasi.** Belum ada bukti satu-ke-satu yang cukup untuk menyatakan requirement ini patuh. Periksa implementasi dan acceptance test terkait. |
 | `FR-REP-03` | Pengguna dapat memilih rentang waktu laporan: bulan ini, tiga bulan terakhir, tahun ini, atau rentang kustom. | P0 / lintas fitur | FSD 6.13, 7.9, 8.8 | **Patuh.** Terverifikasi. Stream laporan reaktif watchReportSummary memfilter rentang tanggal langsung di SQLite database tanpa N+1. |
-| `FR-REP-04` | Aplikasi menampilkan grafik pengeluaran per bulan. | P0 / lintas fitur | FSD 6.13, 7.9, 8.8 | **Patuh.** Terverifikasi. Agregasi SQLite mengelompokkan biaya per bulan tanpa memuat attachment, dan memuat relasi items dalam 1 query batch (uji: ReportRepository single-query SQL aggregation for current month expense). |
+| `FR-REP-04` | Aplikasi menampilkan grafik pengeluaran per bulan. | P0 / lintas fitur | FSD 6.13, 7.9, 8.8 | **Patuh.** Terverifikasi. Query SQLite memfilter record servis berdasarkan rentang tanggal tanpa memuat lampiran, item dimuat dalam 1 query batch, dan agregasi total biaya per bulan dihitung dalam Dart untuk rendering grafik pengeluaran. |
 | `FR-REP-05` | Aplikasi menampilkan rincian biaya berdasarkan kategori pekerjaan jika kategori tersedia. | P0 / lintas fitur | FSD 6.13, 7.9, 8.8 | **Belum diverifikasi.** Belum ada bukti satu-ke-satu yang cukup untuk menyatakan requirement ini patuh. Periksa implementasi dan acceptance test terkait. |
 | `FR-REP-06` | Pengguna dapat memfilter laporan berdasarkan kendaraan. | P0 / lintas fitur | FSD 6.13, 7.9, 8.8 | **Belum diverifikasi.** Belum ada bukti satu-ke-satu yang cukup untuk menyatakan requirement ini patuh. Periksa implementasi dan acceptance test terkait. |
 | `FR-REP-07` | Nilai total laporan harus berasal dari catatan servis yang tersimpan dan tidak boleh dihitung ganda. | P0 / lintas fitur | FSD 6.13, 7.9, 8.8 | **Belum diverifikasi.** Belum ada bukti satu-ke-satu yang cukup untuk menyatakan requirement ini patuh. Periksa implementasi dan acceptance test terkait. |
@@ -182,7 +184,7 @@ Tidak ada requirement yang diberi status `Patuh` dalam revisi ini. Status terseb
 | `FR-SET-01` | Pengguna dapat mengatur preferensi notifikasi. | P0 / lintas fitur | FSD 6.14, 7.10 | **Belum diverifikasi.** Belum ada bukti satu-ke-satu yang cukup untuk menyatakan requirement ini patuh. Periksa implementasi dan acceptance test terkait. |
 | `FR-SET-02` | Pengguna dapat mengatur tema aplikasi pada versi P1. | P1 | FSD 6.14, 7.10 | **P1, belum diverifikasi.** Fitur berada di luar prioritas P0 MVP. Status implementasinya perlu diperiksa sebelum dinyatakan tersedia. |
 | `FR-SET-03` | Pengguna dapat melihat versi aplikasi dan informasi singkat privasi. | P0 / lintas fitur | FSD 6.14, 7.10 | **Belum diverifikasi.** Belum ada bukti satu-ke-satu yang cukup untuk menyatakan requirement ini patuh. Periksa implementasi dan acceptance test terkait. |
-| `FR-SET-04` | Pengguna dapat menghapus seluruh data aplikasi melalui tindakan yang memerlukan konfirmasi berlapis. | P0 / lintas fitur | FSD 6.14, 7.10 | **Patuh.** Terverifikasi. clearAllData memverifikasi hasil pembatalan notifikasi platform dan hasil cleanup seluruh lampiran. Jika pembatalan notifikasi atau pembersihan lampiran gagal, penghapusan database dibatalkan demi integritas (uji: clearAllData platform cancellation failure aborts deletion and preserves database). |
+| `FR-SET-04` | Pengguna dapat menghapus seluruh data aplikasi melalui tindakan yang memerlukan konfirmasi berlapis. | P0 / lintas fitur | FSD 6.14, 7.10 | **Patuh.** Terverifikasi. clearAllData memverifikasi pembatalan notifikasi platform sebelum menghapus database. Transaksi database SQLite di-commit terlebih dahulu, dilanjutkan dengan pembersihan filesystem lampiran via cleanupAllAttachments(); file yang tersisa jika pembersihan gagal akan dipulihkan secara otomatis oleh background orphan cleanup saat startup atau resume aplikasi (uji: clearAllData platform cancellation failure aborts deletion and preserves database). |
 
 ## 3. Non-Functional Requirements
 
@@ -194,7 +196,7 @@ Tidak ada requirement yang diberi status `Patuh` dalam revisi ini. Status terseb
 | `NFR-PER-04` | Grafik dan daftar riwayat harus tetap lancar untuk jumlah data penggunaan pribadi yang wajar. | P0 / lintas fitur | FSD 15 | **Patuh.** Terverifikasi. Query laporan dioptimasi langsung di Drift SQLite dengan filter tanggal dan pemuatan batch tanpa N+1 (S2-01). |
 | `NFR-REL-01` | Data yang telah berhasil disimpan harus tetap tersedia setelah aplikasi ditutup dan dibuka kembali. | P0 / lintas fitur | FSD 9, 10, 13, 16 | **Patuh.** Terverifikasi. Drift SQLite menyimpan seluruh entitas secara persisten ke berkas database lokal di perangkat. |
 | `NFR-REL-02` | Kegagalan menyimpan lampiran tidak boleh menghapus catatan servis yang sudah berhasil disimpan. | P0 / lintas fitur | FSD 9, 10, 13, 16 | **Patuh.** Terverifikasi. Service record tersimpan mandiri bahkan ketika penyimpanan lampiran gagal atau dilewati. |
-| `NFR-REL-03` | Operasi multi-tabel harus menggunakan transaksi agar tidak meninggalkan data parsial. | P0 / lintas fitur | FSD 9, 10, 13, 16 | **Patuh.** Terverifikasi. Transaksi multi-tabel Drift digunakan di seluruh operasi repositori, dan rekonsiliasi notifikasi diawait secara asinkron di luar transaksi (S2-09). |
+| `NFR-REL-03` | Operasi multi-tabel harus menggunakan transaksi agar tidak meninggalkan data parsial. | P0 / lintas fitur | FSD 9, 10, 13, 16 | **Patuh.** Terverifikasi. Transaksi multi-tabel Drift digunakan di seluruh operasi repositori, dan seluruh rekonsiliasi notifikasi pada createSchedule, updateSchedule, toggleActive, dan deleteSchedule di-await secara asinkron di luar transaksi database tanpa pemanggilan ganda (uji: createSchedule and updateSchedule await reconciliation). |
 | `NFR-REL-04` | Aplikasi harus menangani database kosong, lampiran hilang, izin ditolak, dan kegagalan notifikasi tanpa crash. | P0 / lintas fitur | FSD 9, 10, 13, 16 | **Patuh.** Terverifikasi. Empty state dashboard dan jadwal, graceful handling lampiran hilang (alreadyMissingCount), error cards pada kegagalan fetch, serta proteksi pembatalan notifikasi ditangani tanpa crash. |
 | `NFR-REL-05` | Database harus memiliki mekanisme migrasi yang diuji sebelum versi baru dirilis. | P0 / lintas fitur | FSD 9, 10, 13, 16 | **Patuh.** Terverifikasi. Migrasi Drift dari skema v1 ke v2 diuji menyeluruh (uji: Safely migrates schema and backfills unambiguous service records while preserving ambiguous and manual readings). |
 | `NFR-SEC-01` | Data kendaraan dan riwayat servis disimpan di ruang privat aplikasi pada perangkat. | P0 / lintas fitur | FSD 10, 11, 13 | **Teridentifikasi di source, belum diverifikasi.** Penyimpanan database dan lampiran diarahkan ke ruang privat aplikasi. Pemeriksaan perangkat/runtime belum dilakukan. |
@@ -202,7 +204,7 @@ Tidak ada requirement yang diberi status `Patuh` dalam revisi ini. Status terseb
 | `NFR-SEC-03` | Aplikasi hanya meminta izin perangkat yang diperlukan, seperti kamera, foto/media, dan notifikasi sesuai fitur yang digunakan. | P0 / lintas fitur | FSD 10, 11, 13 | **Patuh.** Terverifikasi. Single-owner flow untuk permintaan izin notifikasi tanpa prompt ganda. AndroidManifest.xml hanya memuat izin yang esensial tanpa izin INTERNET atau SCHEDULE_EXACT_ALARM. |
 | `NFR-SEC-04` | Aplikasi tidak boleh mencatat informasi sensitif seperti nomor polisi atau isi nota ke log produksi. | P0 / lintas fitur | FSD 10, 11, 13 | **Patuh.** Terverifikasi. Logging produksi bersih dari data pribadi dan kredensial. |
 | `NFR-SEC-05` | Input pengguna harus divalidasi dan query database harus menggunakan parameter binding atau mekanisme aman dari library database. | P0 / lintas fitur | FSD 10, 11, 13 | **Patuh.** Terverifikasi. Drift SQLite ORM menggunakan prepared statements dengan compiled parameter binding secara menyeluruh. AppValidators memvalidasi seluruh input pengguna. |
-| `NFR-SEC-06` | File lampiran harus diproses sebagai file lokal, memvalidasi tipe dan ukuran, serta tidak dieksekusi sebagai kode. | P0 / lintas fitur | FSD 10, 11, 13 | **Patuh.** Terverifikasi. Validasi signature (magic numbers), containment path via path.isWithin(), batas keluaran 2MB, dan konsistensi ekstensi serta MIME type teruji. |
+| `NFR-SEC-06` | File lampiran harus diproses sebagai file lokal, memvalidasi tipe dan ukuran, serta tidak dieksekusi sebagai kode. | P0 / lintas fitur | FSD 10, 11, 13 | **Patuh.** Terverifikasi. Validasi signature (magic numbers), containment path leksikal serta canonical path dan penolakan symlink via _isSafePath, batas keluaran 2MB, dan konsistensi ekstensi serta MIME type teruji (uji: Symlink pointing outside attachments directory is rejected by _isSafePath). |
 | `NFR-SEC-07` | Aplikasi harus menjelaskan konsekuensi penghapusan data kendaraan atau seluruh data aplikasi. | P0 / lintas fitur | FSD 10, 11, 13 | **Patuh.** Terverifikasi. Dialog konfirmasi berlapis dan pelaporan status penghapusan terstruktur (MotorcycleDeletionResult, DataDeletionResult, AttachmentCleanupResult) mencegah status semu. |
 | `NFR-SEC-08` | Jika backup dan restore dirilis, format cadangan harus divalidasi sebelum data aktif diganti. Dukungan enkripsi file backup perlu ditetapkan sebelum fitur tersebut dirilis ke publik. | Kondisional P1 | FSD 10, 11, 13 | **Kondisional P1, belum diverifikasi.** Persyaratan berlaku ketika backup/restore dirilis. Backup/restore adalah P1 dan belum boleh dinyatakan patuh tanpa validasi format serta keputusan enkripsi. |
 | `NFR-SEC-09` | Aplikasi tidak boleh mengklaim data sepenuhnya aman dari semua bentuk kompromi perangkat. Risiko perangkat yang hilang, di-root, atau diakses pihak lain tetap berada di luar kendali aplikasi. | P0 / lintas fitur | FSD 10, 11, 13 | **Belum diverifikasi.** Dokumen FSD menyatakan keterbatasan keamanan dengan benar. Teks UI, README, dan materi distribusi perlu ditinjau agar tidak mengklaim kebal dari semua serangan. |
@@ -241,36 +243,32 @@ Daftar berikut membantu menemukan area implementasi dan test yang terkait. Dafta
 
 ### 4.1 Hasil dan Bukti Pengujian Terkini
 
-Pada eksekusi pengujian otomasi terkini, terdapat 86 deklarasi test: 77 unit test, 8 widget test, dan 1 integration test end-to-end menyeluruh. Seluruh 86 test lulus (0 gagal) dan flutter analyze bersih tanpa isu (0 warning, 0 error).
+Pada eksekusi pengujian otomasi terkini per 10 November 2026, terdapat 95 deklarasi test: 85 unit test, 9 widget test, dan 1 repository workflow integration test. Seluruh 95 test lulus (0 gagal), flutter analyze bersih tanpa isu (0 warning, 0 error), dan build APK debug Android berhasil dikompilasi secara penuh.
 
 | Jenis Pengujian | Jumlah Test | Status | Bukti File Test |
 |---|---:|---|---|
-| Unit Tests | 77 | Lulus (100%) | `test/unit/*.dart` (10 file test unit) |
-| Widget Tests | 8 | Lulus (100%) | `test/widget/*.dart` (6 file test widget) |
-| Integration Test | 1 | Lulus (100%) | `test/integration/app_workflows_integration_test.dart` |
+| Unit Tests | 85 | Lulus (100%) | `test/unit/*.dart` (13 file test unit) |
+| Widget Tests | 9 | Lulus (100%) | `test/widget/*.dart` (7 file test widget) |
+| Integration Test | 1 | Lulus (100%) | `test/integration/app_workflows_integration_test.dart` (Repository workflow) |
 | Analisis Statis | - | Bersih (0 isu) | `flutter analyze` (No issues found!) |
-| Total Suite | 86 | Lulus (100%) | Eksekusi lengkap test suite |
+| Kompilasi APK | - | Sukses | `flutter build apk --debug` (app-debug.apk) |
+| Total Suite | 95 | Lulus (100%) | Eksekusi lengkap test suite |
 
-## 5. Status Penyelesaian Temuan Audit (Wave 1 - Wave 4)
+## 5. Status Penyelesaian Temuan Audit (Wave 1 - Wave 4 dan Audit v3)
 
-Seluruh 12 temuan perbaikan dari Audit v2 telah diperbaiki dan diverifikasi dengan bukti pengujian:
+Seluruh temuan perbaikan dari Audit v2 serta Audit Pasca Hardening v3 telah diselesaikan dan diverifikasi dengan bukti pengujian:
 
 | ID temuan | Area | Solusi Implementasi | Status dan Bukti Verifikasi |
 |---|---|---|---|
-| S1-01 | Pembatalan notifikasi | `cancelJobsForSchedule`, `cancelJobsForMotorcycle`, dan `deleteSchedule` memverifikasi hasil pembatalan platform. Jika platform gagal, lempar exception dan batalkan penghapusan data SQLite agar job tetap terlacak untuk retry. | **Selesai dan Terverifikasi.** Uji: `deleteSchedule platform cancellation failure throws NotificationException and preserves schedule`, `deleteMotorcycle platform cancellation failure returns failure and preserves motorcycle`. |
-| S1-02 | Cleanup lampiran | `AttachmentCleanupResult` merekam `deletedCount`, `alreadyMissingCount`, dan `failedCount`. Penghapusan tidak lagi menelan error, dan hanya berkas primer yang hilang yang dihitung missing. | **Selesai dan Terverifikasi.** Uji: `AttachmentCleanupResult accurately reflects deleted and missing counts`. |
-| S1-03 | Kronologi odometer | `AppValidators.validateOdometerChronology` mengikutsertakan pembacaan awal (`initialReadingDate`). Nilai riwayat servis yang lebih besar daripada pembacaan tanggal sesudahnya ditolak dengan kode `ODO-005`. | **Selesai dan Terverifikasi.** Uji: `Historical service record higher than subsequent initial reading is rejected`. |
-| S1-04 | Konsistensi cascade delete | Penghapusan kendaraan dan data global memverifikasi pembatalan notifikasi serta hasil cleanup berkas lampiran. Jika salah satu gagal, penghapusan database dibatalkan. | **Selesai dan Terverifikasi.** Uji: `clearAllData platform cancellation failure aborts deletion and preserves database`. |
-| S2-01 | Optimasi query laporan | `ReportRepository` memfilter rentang tanggal dan `motorcycleId` langsung di level database Drift SQLite tanpa N+1. Relasi items dimuat dalam 1 query batch; lampiran gambar tidak dimuat dalam query agregasi. | **Selesai dan Terverifikasi.** Uji: `ReportRepository single-query SQL aggregation for current month expense`, `Calculates report summary, category breakdown, and date filtering`. |
-| S2-02 | State loading dan error dashboard | `DashboardSummary` memiliki field eksplisit `isLoading`, `hasSchedulesError`, `hasRecordsError`, dan `hasExpenseError`. UI menampilkan kartu error khusus dengan tombol coba lagi saat fetch jadwal gagal. | **Selesai dan Terverifikasi.** Komponen: `DashboardSummary`, `DashboardScreen`. |
-| S2-03 | Penjadwalan ulang timezone | `keyLastKnownTimezone` disimpan di settings. Saat aplikasi resume, perubahan timezone dideteksi dan `handleTimezoneChanged()` secara otomatis membatalkan dan menjadwalkan ulang seluruh job tanggal dengan `forceRescheduleDateJobs: true`. | **Selesai dan Terverifikasi.** Uji: `Timezone change reschedules date notifications and updates last known timezone`. |
-| S2-04 | Single-owner permission flow | Alur permintaan izin notifikasi disederhanakan pada `SettingsScreen` dengan kepemilikan tunggal sehingga tidak ada prompt izin ganda ke pengguna. | **Selesai dan Terverifikasi.** Komponen: `SettingsScreen`. |
-| S2-05 | Path traversal containment | `_isSafePath` menggunakan `path.equals()` dan `path.isWithin()` untuk memastikan berkas dan direktori berada di bawah direktori lampiran aplikasi, menolak serangan traversal direktori saudara (sibling prefix attack). | **Selesai dan Terverifikasi.** Uji: `Rejects sibling directory prefix path traversal`. |
-| S2-06 | Konsistensi MIME dan ekstensi | Konversi gambar PNG besar ke format JPEG secara konsisten mengembalikan output MIME `image/jpeg` dan ekstensi berkas `.jpg`. | **Selesai dan Terverifikasi.** Uji: `Large PNG converted to JPEG outputs .jpg extension and image/jpeg MIME`. |
-| S2-07 | Batas ukuran keluaran 2MB | `_processImageIsolate` menerapkan kompresi kualitas berulang dan downscaling dimensi iteratif hingga ukuran berkas akhir terbukti <= 2MB, atau melempar pengecualian eksplisit bila gagal. | **Selesai dan Terverifikasi.** Komponen: `AttachmentStorageService.saveAttachment`. |
-| S2-08 | Prioritas urgensi jadwal overdue | `MaintenanceCalculationResult` menyertakan `unclampedProgress`, dan fungsi perbandingan `compareScheduleUrgency` membandingkan rasio keterlambatan tanpa clamping, memprioritaskan keterlambatan yang lebih parah di posisi teratas. | **Selesai dan Terverifikasi.** Uji: `Severe overdue schedule has higher priority than mild overdue schedule`. |
-| S2-09 | Rekonsiliasi pasca-transaksi | Pemanggilan rekonsiliasi notifikasi pada repositori servis, odometer, dan perawatan dipisahkan dari transaksi SQLite dan diawait sepenuhnya setelah transaksi commit. | **Selesai dan Terverifikasi.** Komponen: `ServiceRecordRepository`, `OdometerRepository`, `MaintenanceRepository`. |
-| S2-10 | Konsistensi SDK constraint | `pubspec.yaml` menggunakan environment `sdk: '>=3.4.0 <4.0.0'` dan `flutter: '>=3.22.0'` secara konsisten dengan platform build Android. | **Selesai dan Terverifikasi.** Berkas: `pubspec.yaml`. |
+| P1-01 | Single-owner permission notifikasi | `SettingsRepository.setNotificationsEnabled()` dijadikan satu-satunya pemilik alur permohonan izin OS dan penyimpanan preferensi. Layar `SettingsScreen` tidak lagi meminta izin secara independen. Mengembalikan `NotificationToggleResult` dengan status izin terperinci (`granted`, `denied`, `permanentlyDenied`, `cancelFailed`). | **Selesai dan Terverifikasi.** Uji: `Single-owner notification permission flow: disabling when cancel fails returns cancelFailed`, `Single-owner notification permission flow: enabling calls requestPermission once`. |
+| P1-02 | Penanganan kegagalan pembatalan alarm | `toggleActive()` pada `MaintenanceRepository` memvalidasi hasil pembatalan `cancelJobsForSchedule()`; bila pembatalan gagal, status jadwal di database tidak diubah menjadi non-aktif dan melempar `NotificationException`. `handleTimezoneChanged()` menandai job sebagai `failed` bila pembatalan alarm gagal. `reconcileForMotorcycle()` memverifikasi pembatalan sebelum menjadwalkan ulang dan mencoba ulang pembatalan pada job berstatus `failed`. | **Selesai dan Terverifikasi.** Uji: `toggleActive throws NotificationException and preserves active state when notification cancel fails`, `handleTimezoneChanged marks jobs failed when cancel fails and does not reschedule on top of uncancelled alarm`. |
+| P1-03 | Single-owner rekonsiliasi ter-await | `createSchedule()` dan `updateSchedule()` pada `MaintenanceRepository` secara eksplisit meng-await `notificationReconciler!.reconcileAll()`. Pemanggilan rekonsiliasi ganda pada `maintenance_form_screen.dart` dihapus sehingga hanya ada satu alur rekonsiliasi yang diawait secara aman di luar transaksi database. | **Selesai dan Terverifikasi.** Uji: `createSchedule and updateSchedule await notification reconciler without duplication`. |
+| P1-04 | Realistis Database-first commit dan filesystem cleanup | Kontrak penghapusan dipisahkan secara realistis antara SQLite dan filesystem: database di-commit terlebih dahulu, kemudian file lampiran dihapus. `deleteRecord()` mengembalikan `RecordDeletionResult`, `deleteAttachment()` mengembalikan `AttachmentCleanupResult`. File yang gagal terhapus tetap terdata dan dibersihkan otomatis oleh background orphan cleanup saat startup atau resume aplikasi. Klaim palsu rollback database dihapus dari dokumentasi. | **Selesai dan Terverifikasi.** Uji: `deleteRecord returns RecordDeletionResult with full cleanup when all files deleted`, `deleteRecord returns RecordDeletionResult with partial cleanup when file deletion fails`. |
+| P2-01 | Loading dan error state UI dashboard | `DashboardSummary` dilengkapi field reaktif `isSchedulesLoading`, `isRecordsLoading`, dan `isExpenseLoading`. `DashboardScreen` merender skeleton loader saat stream masih loading (menghindari representasi keliru angka Rp 0 atau empty state sebelum query selesai), serta menampilkan kartu error dengan tombol coba lagi untuk riwayat dan biaya bulanan. | **Selesai dan Terverifikasi.** Uji widget: `DashboardScreen displays loading indicators for schedules, records, and expenses without false zeros`, `DashboardScreen displays error states and retry buttons for records and expenses`. |
+| P2-02 | Verifikasi pembatalan dan penjadwalan ulang timezone | Mock pengujian diperluas untuk mencatat ID notifikasi yang dibatalkan (`cancelledIds`) dan parameter penjadwalan baru (`scheduledRecords`). Ditambahkan pengujian unit yang membuktikan alarm lama benar-benar dibatalkan sebelum alarm baru dijadwalkan ulang pada target timezone baru. | **Selesai dan Terverifikasi.** Uji: `Timezone change explicitly cancels old alarm IDs and reschedules with new target time`. |
+| P2-03 | Rekonsiliasi RTM dan matriks kepatuhan | RTM diperbarui dengan metadata snapshot terbaru, menghapus kalimat kontradiktif pada Seksi 1.2, menyesuaikan seluruh baris temuan audit dengan implementasi kode aktual, dan menyinkronkan ringkasan 120 requirement. | **Selesai dan Terverifikasi.** Dokumen: `docs/ServisKu_Requirements_Traceability_Matrix.md` dan `docs/ServisKu_Compliance_Matrix.md`. |
+| P2-04 | Penyelarasan batas SDK pubspec dengan lockfile | `pubspec.yaml` diselaraskan ke `sdk: '>=3.13.0 <4.0.0'` dan `flutter: '>=3.47.0'` sesuai resolusi dependency pada `pubspec.lock`. Terverifikasi bersih dengan `flutter pub get`, `flutter analyze`, dan `flutter test`. | **Selesai dan Terverifikasi.** Konfigurasi: `pubspec.yaml` dan `pubspec.lock`. |
+| P2-05 | Perlindungan canonical path dan penolakan symlink | `AttachmentStorageService._isSafePath()` ditingkatkan dengan pemeriksaan `resolveSymbolicLinksSync()` dan verifikasi target symlink untuk memastikan path tidak merujuk ke luar direktori privat lampiran aplikasi melalui symlink traversal. | **Selesai dan Terverifikasi.** Uji: `Symlink pointing outside attachments directory is rejected by _isSafePath`. |
 
 ## 6. Catatan ruang lingkup P1 dan P2
 
@@ -290,10 +288,13 @@ Seluruh 12 temuan perbaikan dari Audit v2 telah diperbaiki dan diverifikasi deng
 
 ## 8. Ringkasan cakupan dokumen
 
-| Jenis | Jumlah ID unik di PRD | Jumlah ID pada RTM | Status P0 MVP |
-|---|---:|---:|---|
-| Functional Requirement | 89 | 89 | Terpenuhi untuk seluruh scope P0 |
-| Non-Functional Requirement | 31 | 31 | Terpenuhi untuk seluruh scope P0 |
-| Total | 120 | 120 | 86 Automated Tests Lulus (0 Gagal) |
+| Kategori Status | Functional (FR) | Non-Functional (NFR) | Total ID | Persentase | Keterangan |
+|---|---:|---:|---:|---:|---|
+| Patuh (Terverifikasi Automated Test) | 27 | 8 | 35 | 29.2% | Terbukti dengan implementasi source dan automated unit/widget/integration test yang lulus. |
+| Belum diverifikasi (Siap Pengujian Fisik) | 51 | 15 | 66 | 55.0% | Kode sumber dan antarmuka UI telah terimplementasi di level MVP, menunggu acceptance test perangkat fisik. |
+| Teridentifikasi di source, belum diverifikasi | 0 | 7 | 7 | 5.8% | Mekanisme privasi/keamanan/aksesibilitas ada di source, memerlukan verifikasi OS runtime. |
+| Sebagian | 0 | 1 | 1 | 0.8% | Optimasi resolusi gambar lokal (NFR-UX-12); aset gambar tersedia. |
+| Di luar scope MVP (P1 / Kondisional P1) | 11 | 0 | 11 | 9.2% | Fitur P1 PRD v1.1 (pencarian teks, backup lokal, dark theme) dan syarat enkripsi backup. |
+| **Total Keseluruhan** | **89** | **31** | **120** | **100.0%** | **Cakupan lengkap 120 ID requirement PRD v1.1** |
 
-**Catatan akhir:** Seluruh temuan audit dari Wave 1 sampai Wave 4 telah diselesaikan secara menyeluruh. Kode sumber bersih dari isu statis (flutter analyze), lulus 100% pengujian otomasi (86 tests), dan siap untuk build APK Android.
+**Catatan akhir:** Seluruh temuan audit Pasca Hardening v3 (P1-01 hingga P2-05) telah diselesaikan secara menyeluruh. Kode sumber bersih dari isu statis (flutter analyze: 0 issues), lulus 100% pengujian otomasi (95 tests: 85 unit, 9 widget, 1 integration), dan build APK debug Android berhasil dikompilasi secara penuh.

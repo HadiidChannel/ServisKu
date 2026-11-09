@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -21,9 +22,7 @@ void main() {
       }
     });
 
-    test(
-        'Safely migrates schema and backfills unambiguous service records while preserving ambiguous and manual readings',
-        () async {
+    test('Safely migrates schema and backfills unambiguous service records while preserving ambiguous and manual readings', () async {
       // 1. Create a SQLite database file with schema version 1 using sqlite3 directly
       final rawDb = sqlite3.open(dbFile.path);
 
@@ -185,14 +184,16 @@ void main() {
       await appDb.customSelect('SELECT COUNT(*) FROM motorcycles;').get();
 
       // Verify schema version is upgraded to 2
-      final versionResult =
-          await appDb.customSelect('PRAGMA user_version;').getSingle();
+      final versionResult = await appDb
+          .customSelect('PRAGMA user_version;')
+          .getSingle();
       expect(versionResult.read<int>('user_version'), equals(2));
 
       // 4. Verify backfill results
       final rows = await appDb
           .customSelect(
-              'SELECT id, service_record_id, source FROM odometer_readings ORDER BY id;')
+            'SELECT id, service_record_id, source FROM odometer_readings ORDER BY id;',
+          )
           .get();
 
       final odoMap = {for (var r in rows) r.read<String>('id'): r};
@@ -204,21 +205,16 @@ void main() {
       );
 
       // Ambiguous service record: left NULL because multiple candidate service records exist
-      expect(
-        odoMap['odo-ambiguous']!.read<String?>('service_record_id'),
-        null,
-      );
+      expect(odoMap['odo-ambiguous']!.read<String?>('service_record_id'), null);
 
       // Manual reading: left NULL because source is manual
-      expect(
-        odoMap['odo-manual']!.read<String?>('service_record_id'),
-        null,
-      );
+      expect(odoMap['odo-manual']!.read<String?>('service_record_id'), null);
 
       // Verify index on service_record_id exists
       final indexCheck = await appDb
           .customSelect(
-              "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_odometer_service_record';")
+            "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_odometer_service_record';",
+          )
           .get();
       expect(indexCheck, isNotEmpty);
 

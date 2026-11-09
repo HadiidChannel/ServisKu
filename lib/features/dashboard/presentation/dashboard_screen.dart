@@ -21,23 +21,22 @@ class DashboardScreen extends ConsumerWidget {
 
     return motorcyclesAsync.when(
       loading: () => Scaffold(
-        appBar: AppBar(
-          title: const ServisKuLogoWidget(size: 36),
-        ),
+        appBar: AppBar(title: const ServisKuLogoWidget(size: 36)),
         body: const Center(child: CircularProgressIndicator()),
       ),
       error: (err, stack) => Scaffold(
-        appBar: AppBar(
-          title: const ServisKuLogoWidget(size: 36),
-        ),
+        appBar: AppBar(title: const ServisKuLogoWidget(size: 36)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline_rounded,
-                    size: 48, color: AppColors.statusTerlambat),
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 48,
+                  color: AppColors.statusTerlambat,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Gagal memuat data kendaraan: $err',
@@ -75,8 +74,7 @@ class DashboardScreen extends ConsumerWidget {
                   children: [
                     const EmptyIllustrationWidget(
                       title: 'Belum Ada Motor',
-                      subtitle:
-                          'Tambahkan sepeda motor Anda untuk mulai memantau perawatan dan odometer.',
+                      subtitle: 'Tambahkan sepeda motor Anda untuk mulai memantau perawatan dan odometer.',
                       icon: Icons.two_wheeler_rounded,
                     ),
                     const SizedBox(height: 24),
@@ -146,9 +144,11 @@ class DashboardScreen extends ConsumerWidget {
               onRefresh: () async {
                 ref.invalidate(motorcyclesStreamProvider);
                 ref.invalidate(
-                    motorcycleSchedulesProvider(activeMotorcycle.id));
+                  motorcycleSchedulesProvider(activeMotorcycle.id),
+                );
                 ref.invalidate(
-                    motorcycleServiceRecordsProvider(activeMotorcycle.id));
+                  motorcycleServiceRecordsProvider(activeMotorcycle.id),
+                );
                 ref.invalidate(activeMotorcycleMonthExpenseProvider);
               },
               child: SingleChildScrollView(
@@ -167,12 +167,20 @@ class DashboardScreen extends ConsumerWidget {
 
                     // Priority Maintenance Schedules
                     _buildPrioritySchedules(
-                        context, ref, activeMotorcycle.id, summary),
+                      context,
+                      ref,
+                      activeMotorcycle.id,
+                      summary,
+                    ),
                     const SizedBox(height: 20),
 
                     // Latest Service Activity & Monthly Expense Row
                     _buildActivityAndExpense(
-                        context, activeMotorcycle.id, summary),
+                      context,
+                      ref,
+                      activeMotorcycle.id,
+                      summary,
+                    ),
                     const SizedBox(height: 24),
 
                     // Prominent Tambah Catatan Servis Button
@@ -199,8 +207,9 @@ class DashboardScreen extends ConsumerWidget {
 
   Widget _buildHeroCard(BuildContext context, dynamic motorcycle) {
     final disableAnimations = MediaQuery.of(context).disableAnimations;
-    final duration =
-        disableAnimations ? Duration.zero : const Duration(milliseconds: 250);
+    final duration = disableAnimations
+        ? Duration.zero
+        : const Duration(milliseconds: 250);
 
     return AnimatedSwitcher(
       duration: duration,
@@ -216,8 +225,9 @@ class DashboardScreen extends ConsumerWidget {
               AnimatedSwitcher(
                 duration: duration,
                 child: MotorcycleHeroWidget(
-                  key:
-                      ValueKey('${motorcycle.id}_${motorcycle.motorcycleType}'),
+                  key: ValueKey(
+                    '${motorcycle.id}_${motorcycle.motorcycleType}',
+                  ),
                   motorcycleType: motorcycle.motorcycleType,
                   height: 120,
                 ),
@@ -258,14 +268,15 @@ class DashboardScreen extends ConsumerWidget {
                     ],
                   ),
                   OutlinedButton.icon(
-                    onPressed: () => context.push(
-                      '/vehicles/${motorcycle.id}/odometer',
-                    ),
+                    onPressed: () =>
+                        context.push('/vehicles/${motorcycle.id}/odometer'),
                     icon: const Icon(Icons.speed_rounded, size: 18),
                     label: const Text('Perbarui'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                     ),
                   ),
                 ],
@@ -325,8 +336,9 @@ class DashboardScreen extends ConsumerWidget {
     required IconData icon,
   }) {
     final disableAnimations = MediaQuery.of(context).disableAnimations;
-    final duration =
-        disableAnimations ? Duration.zero : const Duration(milliseconds: 200);
+    final duration = disableAnimations
+        ? Duration.zero
+        : const Duration(milliseconds: 200);
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
@@ -384,10 +396,7 @@ class DashboardScreen extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Jadwal Prioritas',
-              style: AppTypography.headlineSmall,
-            ),
+            const Text('Jadwal Prioritas', style: AppTypography.headlineSmall),
             TextButton(
               onPressed: () =>
                   context.push('/vehicles/$motorcycleId/maintenance'),
@@ -402,8 +411,10 @@ class DashboardScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline_rounded,
-                      color: AppColors.statusTerlambat),
+                  const Icon(
+                    Icons.error_outline_rounded,
+                    color: AppColors.statusTerlambat,
+                  ),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Text(
@@ -413,10 +424,24 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   TextButton(
                     onPressed: () => ref.invalidate(
-                        motorcycleSchedulesProvider(motorcycleId)),
+                      motorcycleSchedulesProvider(motorcycleId),
+                    ),
                     child: const Text('Coba Lagi'),
                   ),
                 ],
+              ),
+            ),
+          ),
+        ] else if (summary.isSchedulesLoading) ...[
+          const Card(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                ),
               ),
             ),
           ),
@@ -488,7 +513,9 @@ class DashboardScreen extends ConsumerWidget {
                               : const Duration(milliseconds: 300),
                           curve: Curves.easeOutCubic,
                           tween: Tween<double>(
-                              begin: 0, end: item.calculation.progress),
+                            begin: 0,
+                            end: item.calculation.progress,
+                          ),
                           builder: (context, value, _) => ClipRRect(
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
@@ -515,6 +542,7 @@ class DashboardScreen extends ConsumerWidget {
 
   Widget _buildActivityAndExpense(
     BuildContext context,
+    WidgetRef ref,
     String motorcycleId,
     DashboardSummary summary,
   ) {
@@ -540,8 +568,11 @@ class DashboardScreen extends ConsumerWidget {
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.history_rounded,
-                            size: 18, color: AppColors.primary),
+                        Icon(
+                          Icons.history_rounded,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
                         SizedBox(width: 6),
                         Text(
                           'Servis Terakhir',
@@ -551,19 +582,54 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 10),
                     if (summary.hasRecordsError) ...[
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Gagal memuat servis terakhir.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.statusTerlambat,
+                              ),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => ref.invalidate(
+                              motorcycleServiceRecordsProvider(motorcycleId),
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 2,
+                              ),
+                              child: Text(
+                                'Coba lagi',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else if (summary.isRecordsLoading) ...[
                       const Text(
-                        'Gagal memuat servis terakhir.',
+                        'Memuat data...',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.statusTerlambat,
+                          color: AppColors.textMuted,
                         ),
                       ),
                     ] else if (summary.latestService != null) ...[
                       Text(
                         AppFormatters.formatDateIndonesian(
-                            summary.latestService!.serviceDate),
-                        style: AppTypography.labelMedium
-                            .copyWith(color: AppColors.textPrimary),
+                          summary.latestService!.serviceDate,
+                        ),
+                        style: AppTypography.labelMedium.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -575,7 +641,8 @@ class DashboardScreen extends ConsumerWidget {
                       const SizedBox(height: 4),
                       Text(
                         AppFormatters.formatRupiah(
-                            summary.latestService!.totalCost),
+                          summary.latestService!.totalCost,
+                        ),
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -608,8 +675,11 @@ class DashboardScreen extends ConsumerWidget {
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.account_balance_wallet_outlined,
-                            size: 18, color: AppColors.blueAccent),
+                        Icon(
+                          Icons.account_balance_wallet_outlined,
+                          size: 18,
+                          color: AppColors.blueAccent,
+                        ),
                         SizedBox(width: 6),
                         Text(
                           'Biaya Bulan Ini',
@@ -619,11 +689,45 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 10),
                     if (summary.hasExpenseError) ...[
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Gagal memuat biaya',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.statusTerlambat,
+                              ),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => ref.invalidate(
+                              activeMotorcycleMonthExpenseProvider,
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 2,
+                              ),
+                              child: Text(
+                                'Coba lagi',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else if (summary.isExpenseLoading) ...[
                       const Text(
-                        'Gagal memuat biaya',
+                        'Memuat biaya...',
                         style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.statusTerlambat,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textMuted,
                         ),
                       ),
                     ] else ...[

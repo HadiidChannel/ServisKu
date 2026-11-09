@@ -45,8 +45,11 @@ app.*.map.json
 /android/app/release
 android/local.properties
 **/android/local.properties
+.gradle/
+**/android/.gradle/
 .kotlin/
 **/android/.kotlin/
+*.apk
 *.rar
 
 # Widget Preview related

@@ -96,8 +96,9 @@ class MotorcycleSelectorSheet extends ConsumerWidget {
                             : AppColors.surfaceVariant.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color:
-                              isActive ? AppColors.primary : AppColors.border,
+                          color: isActive
+                              ? AppColors.primary
+                              : AppColors.border,
                           width: isActive ? 1.5 : 1,
                         ),
                       ),

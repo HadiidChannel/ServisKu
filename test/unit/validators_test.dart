@@ -14,8 +14,9 @@ void main() {
           motorcycleType: AppConstants.typeMatic,
           propulsionType: AppConstants.propulsionGasoline,
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'VEH-001')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'VEH-001'),
+        ),
       );
     });
 
@@ -28,8 +29,9 @@ void main() {
           motorcycleType: AppConstants.typeMatic,
           propulsionType: AppConstants.propulsionGasoline,
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'VEH-002')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'VEH-002'),
+        ),
       );
     });
 
@@ -43,8 +45,9 @@ void main() {
           propulsionType: AppConstants.propulsionGasoline,
           manufactureYear: DateTime.now().year + 5,
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'VEH-003')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'VEH-003'),
+        ),
       );
     });
 
@@ -58,8 +61,9 @@ void main() {
           propulsionType: AppConstants.propulsionGasoline,
           currentOdometer: -10,
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'ODO-001')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'ODO-001'),
+        ),
       );
     });
 
@@ -86,8 +90,9 @@ void main() {
           odometerKm: -1,
           readingDate: DateTime.now(),
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'ODO-001')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'ODO-001'),
+        ),
       );
     });
 
@@ -97,8 +102,9 @@ void main() {
           odometerKm: 5000,
           readingDate: DateTime.now().add(const Duration(days: 2)),
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'ODO-003')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'ODO-003'),
+        ),
       );
     });
 
@@ -110,8 +116,9 @@ void main() {
           latestKm: 5000,
           isCorrection: false,
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'ODO-002')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'ODO-002'),
+        ),
       );
     });
 
@@ -137,8 +144,9 @@ void main() {
           isCorrection: true,
           correctionReason: '   ',
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'ODO-004')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'ODO-004'),
+        ),
       );
     });
   });
@@ -150,8 +158,9 @@ void main() {
           name: '',
           intervalKm: 2000,
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'MNT-004')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'MNT-004'),
+        ),
       );
     });
 
@@ -162,8 +171,9 @@ void main() {
           intervalKm: null,
           intervalMonths: null,
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'MNT-001')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'MNT-001'),
+        ),
       );
     });
 
@@ -173,8 +183,9 @@ void main() {
           name: 'Oli Mesin',
           intervalKm: 0,
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'MNT-002')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'MNT-002'),
+        ),
       );
     });
   });
@@ -186,11 +197,12 @@ void main() {
           serviceDate: DateTime.now().add(const Duration(days: 3)),
           odometerKm: 10000,
           items: [
-            {'itemName': 'Ganti Oli', 'itemCost': 50000}
+            {'itemName': 'Ganti Oli', 'itemCost': 50000},
           ],
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'SRV-003')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'SRV-003'),
+        ),
       );
     });
 
@@ -201,8 +213,9 @@ void main() {
           odometerKm: 10000,
           items: [],
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'SRV-001')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'SRV-001'),
+        ),
       );
     });
 
@@ -212,11 +225,12 @@ void main() {
           serviceDate: DateTime.now(),
           odometerKm: 10000,
           items: [
-            {'itemName': 'Ganti Oli', 'itemCost': -5000}
+            {'itemName': 'Ganti Oli', 'itemCost': -5000},
           ],
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'SRV-002')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'SRV-002'),
+        ),
       );
     });
 
@@ -229,17 +243,18 @@ void main() {
             {
               'itemName': 'Ganti Oli Mesin Bagian 1',
               'itemCost': 50000,
-              'maintenanceScheduleId': 'sched_1'
+              'maintenanceScheduleId': 'sched_1',
             },
             {
               'itemName': 'Ganti Oli Mesin Bagian 2',
               'itemCost': 30000,
-              'maintenanceScheduleId': 'sched_1'
+              'maintenanceScheduleId': 'sched_1',
             },
           ],
         ),
-        throwsA(isA<ValidationException>()
-            .having((e) => e.code, 'code', 'SRV-006')),
+        throwsA(
+          isA<ValidationException>().having((e) => e.code, 'code', 'SRV-006'),
+        ),
       );
     });
   });

@@ -16,10 +16,7 @@ class ServisKuApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       routerConfig: appRouter,
       locale: const Locale('id', 'ID'),
-      supportedLocales: const [
-        Locale('id', 'ID'),
-        Locale('en', 'US'),
-      ],
+      supportedLocales: const [Locale('id', 'ID'), Locale('en', 'US')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

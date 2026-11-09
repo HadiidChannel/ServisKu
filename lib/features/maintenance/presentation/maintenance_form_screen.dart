@@ -17,11 +17,7 @@ class MaintenanceFormScreen extends ConsumerStatefulWidget {
   final String? scheduleId;
   final String? vehicleId;
 
-  const MaintenanceFormScreen({
-    super.key,
-    this.scheduleId,
-    this.vehicleId,
-  });
+  const MaintenanceFormScreen({super.key, this.scheduleId, this.vehicleId});
 
   @override
   ConsumerState<MaintenanceFormScreen> createState() =>
@@ -58,9 +54,11 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
     _intervalMonthsController = TextEditingController();
     _lastDoneKmController = TextEditingController();
     _reminderLeadKmController = TextEditingController(
-        text: AppConstants.defaultReminderLeadKm.toString());
+      text: AppConstants.defaultReminderLeadKm.toString(),
+    );
     _reminderLeadDaysController = TextEditingController(
-        text: AppConstants.defaultReminderLeadDays.toString());
+      text: AppConstants.defaultReminderLeadDays.toString(),
+    );
 
     if (isEditing) {
       _loadExisting();
@@ -117,8 +115,9 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
 
   Future<void> _showTemplatePicker() async {
     final motorcycles = await ref.read(motorcycleRepositoryProvider).getAll();
-    final currentMotorcycle =
-        motorcycles.where((m) => m.id == _selectedMotorcycleId).firstOrNull;
+    final currentMotorcycle = motorcycles
+        .where((m) => m.id == _selectedMotorcycleId)
+        .firstOrNull;
 
     final templates = MaintenanceTemplate.getTemplatesForMotorcycle(
       motorcycleType: currentMotorcycle?.motorcycleType ?? 'matic',
@@ -164,14 +163,18 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.info_outline_rounded,
-                      size: 18, color: AppColors.primaryDark),
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    size: 18,
+                    color: AppColors.primaryDark,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Interval pada template adalah nilai acuan awal yang dapat disesuaikan. Sesuaikan interval berdasarkan buku manual resmi sepeda motor atau anjuran mekanik.',
-                      style: AppTypography.bodySmall
-                          .copyWith(color: AppColors.textPrimary),
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                 ],
@@ -192,8 +195,10 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
                       '${t.category} • ${t.defaultIntervalKm != null ? "${AppFormatters.formatNumber(t.defaultIntervalKm!)} km" : ""}${t.defaultIntervalKm != null && t.defaultIntervalMonths != null ? " / " : ""}${t.defaultIntervalMonths != null ? "${t.defaultIntervalMonths} bulan" : ""}',
                       style: AppTypography.bodySmall,
                     ),
-                    trailing:
-                        const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 14,
+                    ),
                     onTap: () {
                       Navigator.of(ctx).pop();
                       _applyTemplate(t);
@@ -235,8 +240,9 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
     if (intKm == null && intMonths == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text('Isi interval kilometer, interval waktu, atau keduanya.'),
+          content: Text(
+            'Isi interval kilometer, interval waktu, atau keduanya.',
+          ),
           backgroundColor: AppColors.statusTerlambat,
         ),
       );
@@ -286,26 +292,14 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
         );
       }
 
-      // Reconcile notifications
-      final motorcycle = await ref
-          .read(motorcycleRepositoryProvider)
-          .getById(_selectedMotorcycleId!);
-      final schedules = await ref
-          .read(maintenanceRepositoryProvider)
-          .getSchedules(_selectedMotorcycleId!);
-      if (motorcycle != null) {
-        await ref.read(notificationReconcilerProvider).reconcileForMotorcycle(
-              motorcycle: motorcycle,
-              schedules: schedules,
-            );
-      }
-
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isEditing
-              ? 'Jadwal perawatan berhasil diperbarui.'
-              : 'Jadwal perawatan berhasil disimpan.'),
+          content: Text(
+            isEditing
+                ? 'Jadwal perawatan berhasil diperbarui.'
+                : 'Jadwal perawatan berhasil disimpan.',
+          ),
         ),
       );
       context.pop();
@@ -313,8 +307,9 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.statusTerlambat),
+          content: Text(e.message),
+          backgroundColor: AppColors.statusTerlambat,
+        ),
       );
     } catch (_) {
       if (!mounted) return;
@@ -374,7 +369,7 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
                       onChanged: isEditing
                           ? null
                           : (val) =>
-                              setState(() => _selectedMotorcycleId = val),
+                                setState(() => _selectedMotorcycleId = val),
                     );
                   },
                   loading: () => const LinearProgressIndicator(),
@@ -457,16 +452,19 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Tanggal Terakhir',
-                              style: AppTypography.titleSmall),
+                          const Text(
+                            'Tanggal Terakhir',
+                            style: AppTypography.titleSmall,
+                          ),
                           const SizedBox(height: 6),
                           InkWell(
                             onTap: _selectLastDoneDate,
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
                               height: 52,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 14),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(12),
@@ -479,7 +477,8 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
                                   Text(
                                     _lastDoneDate != null
                                         ? AppFormatters.formatDateIndonesian(
-                                            _lastDoneDate!)
+                                            _lastDoneDate!,
+                                          )
                                         : 'Pilih Tanggal',
                                     style: TextStyle(
                                       color: _lastDoneDate != null
@@ -487,8 +486,11 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
                                           : AppColors.textMuted,
                                     ),
                                   ),
-                                  const Icon(Icons.calendar_today_rounded,
-                                      size: 18, color: AppColors.primary),
+                                  const Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 18,
+                                    color: AppColors.primary,
+                                  ),
                                 ],
                               ),
                             ),
@@ -530,10 +532,13 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
 
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Status Aktif',
-                      style: AppTypography.titleSmall),
-                  subtitle:
-                      const Text('Jadwal aktif dipantau dan masuk pengingat'),
+                  title: const Text(
+                    'Status Aktif',
+                    style: AppTypography.titleSmall,
+                  ),
+                  subtitle: const Text(
+                    'Jadwal aktif dipantau dan masuk pengingat',
+                  ),
                   value: _isActive,
                   activeThumbColor: AppColors.primary,
                   onChanged: (val) => setState(() => _isActive = val),

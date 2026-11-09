@@ -14,23 +14,21 @@ class NotificationReconciler {
   final NotificationService notificationService;
   final _uuid = const Uuid();
 
-  NotificationReconciler({
-    required this.db,
-    required this.notificationService,
-  });
+  NotificationReconciler({required this.db, required this.notificationService});
 
   Future<void> reconcileAll({bool forceRescheduleDateJobs = false}) async {
     try {
-      final enabledSetting = await (db.select(db.appSettings)
-            ..where(
-                (tbl) => tbl.key.equals(AppConstants.keyNotificationsEnabled)))
-          .getSingleOrNull();
+      final enabledSetting =
+          await (db.select(db.appSettings)..where(
+                (tbl) => tbl.key.equals(AppConstants.keyNotificationsEnabled),
+              ))
+              .getSingleOrNull();
 
       final isNotificationsEnabled = enabledSetting?.value != 'false';
       if (!isNotificationsEnabled) return;
 
-      final hasDevicePermission =
-          await notificationService.areNotificationsEnabled();
+      final hasDevicePermission = await notificationService
+          .areNotificationsEnabled();
       if (!hasDevicePermission) return;
 
       final motorcycles = await db.select(db.motorcycles).get();
@@ -53,9 +51,9 @@ class NotificationReconciler {
           lastOdometerUpdate: lastUpdate,
         );
 
-        final scheduleRows = await (db.select(db.maintenanceSchedules)
-              ..where((tbl) => tbl.motorcycleId.equals(mRow.id)))
-            .get();
+        final scheduleRows = await (db.select(
+          db.maintenanceSchedules,
+        )..where((tbl) => tbl.motorcycleId.equals(mRow.id))).get();
         final schedules = scheduleRows.map(_scheduleToDomain).toList();
 
         await reconcileForMotorcycle(
@@ -76,16 +74,17 @@ class NotificationReconciler {
   }) async {
     try {
       // Check if notifications are enabled in settings
-      final enabledSetting = await (db.select(db.appSettings)
-            ..where(
-                (tbl) => tbl.key.equals(AppConstants.keyNotificationsEnabled)))
-          .getSingleOrNull();
+      final enabledSetting =
+          await (db.select(db.appSettings)..where(
+                (tbl) => tbl.key.equals(AppConstants.keyNotificationsEnabled),
+              ))
+              .getSingleOrNull();
 
       final isNotificationsEnabled = enabledSetting?.value != 'false';
       if (!isNotificationsEnabled) return;
 
-      final hasDevicePermission =
-          await notificationService.areNotificationsEnabled();
+      final hasDevicePermission = await notificationService
+          .areNotificationsEnabled();
       if (!hasDevicePermission) return;
 
       for (final schedule in schedules) {
@@ -102,23 +101,26 @@ class NotificationReconciler {
         final cycleKey = MaintenanceCalculator.generateCycleKey(schedule);
 
         // Cancel any obsolete jobs for this schedule from a previous cycle
-        final obsoleteJobs = await (db.select(db.notificationJobs)
-              ..where((tbl) =>
-                  tbl.maintenanceScheduleId.equals(schedule.id) &
-                  tbl.cycleKey.isNotValue(cycleKey)))
-            .get();
+        final obsoleteJobs =
+            await (db.select(db.notificationJobs)..where(
+                  (tbl) =>
+                      tbl.maintenanceScheduleId.equals(schedule.id) &
+                      tbl.cycleKey.isNotValue(cycleKey),
+                ))
+                .get();
 
         for (final oldJob in obsoleteJobs) {
-          final res = await notificationService
-              .cancelNotification(oldJob.platformNotificationId);
+          final res = await notificationService.cancelNotification(
+            oldJob.platformNotificationId,
+          );
           if (res.isSuccess) {
-            await (db.delete(db.notificationJobs)
-                  ..where((tbl) => tbl.id.equals(oldJob.id)))
-                .go();
+            await (db.delete(
+              db.notificationJobs,
+            )..where((tbl) => tbl.id.equals(oldJob.id))).go();
           } else {
-            await (db.update(db.notificationJobs)
-                  ..where((tbl) => tbl.id.equals(oldJob.id)))
-                .write(
+            await (db.update(
+              db.notificationJobs,
+            )..where((tbl) => tbl.id.equals(oldJob.id))).write(
               NotificationJobsCompanion(
                 state: const Value(AppConstants.jobStateFailed),
                 updatedAt: Value(DateTime.now().toIso8601String()),
@@ -132,17 +134,20 @@ class NotificationReconciler {
             schedule.intervalMonths! > 0 &&
             result.dueDate != null &&
             schedule.lastDoneDate != null) {
-          final existingJob = await (db.select(db.notificationJobs)
-                ..where((tbl) =>
-                    tbl.maintenanceScheduleId.equals(schedule.id) &
-                    tbl.cycleKey.equals(cycleKey) &
-                    tbl.triggerType.equals(AppConstants.triggerDateDue)))
-              .getSingleOrNull();
+          final existingJob =
+              await (db.select(db.notificationJobs)..where(
+                    (tbl) =>
+                        tbl.maintenanceScheduleId.equals(schedule.id) &
+                        tbl.cycleKey.equals(cycleKey) &
+                        tbl.triggerType.equals(AppConstants.triggerDateDue),
+                  ))
+                  .getSingleOrNull();
 
           // FSD 8.4: default reminderLeadDays is 0 (due date itself)
           final leadDays = schedule.reminderLeadDays ?? 0;
-          final reminderDate =
-              result.dueDate!.subtract(Duration(days: leadDays));
+          final reminderDate = result.dueDate!.subtract(
+            Duration(days: leadDays),
+          );
           final reminderDateIso = reminderDate.toIso8601String();
           final notifId = NotificationService.generateNotificationId(
             schedule.id,
@@ -153,16 +158,39 @@ class NotificationReconciler {
 
           if (existingJob == null) {
             needsSchedule = true;
-          } else if (existingJob.state == AppConstants.jobStateFailed ||
-              existingJob.state == AppConstants.jobStateCancelled) {
+          } else if (existingJob.state == AppConstants.jobStateCancelled) {
             needsSchedule = true;
+          } else if (existingJob.state == AppConstants.jobStateFailed) {
+            // If job previously failed cancellation, retry cancellation first before rescheduling
+            final retryCancel = await notificationService.cancelNotification(
+              existingJob.platformNotificationId,
+            );
+            if (!retryCancel.isSuccess) {
+              needsSchedule = false;
+            } else {
+              needsSchedule = true;
+            }
           } else if (existingJob.state == AppConstants.jobStateScheduled) {
             if (forceRescheduleDateJobs ||
                 existingJob.plannedAt != reminderDateIso) {
               // Configuration or timezone changed, cancel obsolete platform notification
-              await notificationService
-                  .cancelNotification(existingJob.platformNotificationId);
-              needsSchedule = true;
+              final cancelRes = await notificationService.cancelNotification(
+                existingJob.platformNotificationId,
+              );
+              if (!cancelRes.isSuccess) {
+                // If cancellation failed, record failure so it can be retried and avoid duplicate scheduling
+                await (db.update(
+                  db.notificationJobs,
+                )..where((tbl) => tbl.id.equals(existingJob.id))).write(
+                  NotificationJobsCompanion(
+                    state: const Value(AppConstants.jobStateFailed),
+                    updatedAt: Value(DateTime.now().toIso8601String()),
+                  ),
+                );
+                needsSchedule = false;
+              } else {
+                needsSchedule = true;
+              }
             }
           } else if (existingJob.state == AppConstants.jobStateDelivered) {
             // If reminder date changed to a future date, schedule the new date
@@ -173,14 +201,14 @@ class NotificationReconciler {
           }
 
           if (needsSchedule) {
-            final scheduleResult =
-                await notificationService.scheduleDateNotification(
-              id: notifId,
-              title: 'Pengingat: ${schedule.name}',
-              body:
-                  '${motorcycle.nickname} mendekati batas waktu servis (${result.dateReason ?? result.reason}).',
-              scheduledDate: reminderDate,
-            );
+            final scheduleResult = await notificationService
+                .scheduleDateNotification(
+                  id: notifId,
+                  title: 'Pengingat: ${schedule.name}',
+                  body:
+                      '${motorcycle.nickname} mendekati batas waktu servis (${result.dateReason ?? result.reason}).',
+                  scheduledDate: reminderDate,
+                );
 
             final String state;
             if (scheduleResult.isDeliveredImmediate) {
@@ -193,9 +221,9 @@ class NotificationReconciler {
 
             final nowIso = DateTime.now().toIso8601String();
             if (existingJob != null) {
-              await (db.update(db.notificationJobs)
-                    ..where((tbl) => tbl.id.equals(existingJob.id)))
-                  .write(
+              await (db.update(
+                db.notificationJobs,
+              )..where((tbl) => tbl.id.equals(existingJob.id))).write(
                 NotificationJobsCompanion(
                   state: Value(state),
                   plannedAt: Value(reminderDateIso),
@@ -203,7 +231,9 @@ class NotificationReconciler {
                 ),
               );
             } else {
-              await db.into(db.notificationJobs).insert(
+              await db
+                  .into(db.notificationJobs)
+                  .insert(
                     NotificationJobsCompanion.insert(
                       id: _uuid.v4(),
                       maintenanceScheduleId: schedule.id,
@@ -227,12 +257,14 @@ class NotificationReconciler {
             result.remainingKm != null &&
             schedule.lastDoneKm != null) {
           if (result.kmStatus == MaintenanceStatus.segera) {
-            final existingJob = await (db.select(db.notificationJobs)
-                  ..where((tbl) =>
-                      tbl.maintenanceScheduleId.equals(schedule.id) &
-                      tbl.cycleKey.equals(cycleKey) &
-                      tbl.triggerType.equals(AppConstants.triggerKmSoon)))
-                .getSingleOrNull();
+            final existingJob =
+                await (db.select(db.notificationJobs)..where(
+                      (tbl) =>
+                          tbl.maintenanceScheduleId.equals(schedule.id) &
+                          tbl.cycleKey.equals(cycleKey) &
+                          tbl.triggerType.equals(AppConstants.triggerKmSoon),
+                    ))
+                    .getSingleOrNull();
 
             if (existingJob == null ||
                 existingJob.state == AppConstants.jobStateFailed ||
@@ -242,8 +274,7 @@ class NotificationReconciler {
                 AppConstants.triggerKmSoon,
               );
 
-              final delivered =
-                  await notificationService.showImmediateNotification(
+              final delivered = await notificationService.showImmediateNotification(
                 id: notifId,
                 title: 'Perawatan Segera: ${schedule.name}',
                 body:
@@ -256,9 +287,9 @@ class NotificationReconciler {
 
               final nowIso = DateTime.now().toIso8601String();
               if (existingJob != null) {
-                await (db.update(db.notificationJobs)
-                      ..where((tbl) => tbl.id.equals(existingJob.id)))
-                    .write(
+                await (db.update(
+                  db.notificationJobs,
+                )..where((tbl) => tbl.id.equals(existingJob.id))).write(
                   NotificationJobsCompanion(
                     state: Value(state),
                     plannedAt: Value(nowIso),
@@ -266,7 +297,9 @@ class NotificationReconciler {
                   ),
                 );
               } else {
-                await db.into(db.notificationJobs).insert(
+                await db
+                    .into(db.notificationJobs)
+                    .insert(
                       NotificationJobsCompanion.insert(
                         id: _uuid.v4(),
                         maintenanceScheduleId: schedule.id,
@@ -282,12 +315,14 @@ class NotificationReconciler {
               }
             }
           } else if (result.kmStatus == MaintenanceStatus.terlambat) {
-            final existingJob = await (db.select(db.notificationJobs)
-                  ..where((tbl) =>
-                      tbl.maintenanceScheduleId.equals(schedule.id) &
-                      tbl.cycleKey.equals(cycleKey) &
-                      tbl.triggerType.equals(AppConstants.triggerKmOverdue)))
-                .getSingleOrNull();
+            final existingJob =
+                await (db.select(db.notificationJobs)..where(
+                      (tbl) =>
+                          tbl.maintenanceScheduleId.equals(schedule.id) &
+                          tbl.cycleKey.equals(cycleKey) &
+                          tbl.triggerType.equals(AppConstants.triggerKmOverdue),
+                    ))
+                    .getSingleOrNull();
 
             if (existingJob == null ||
                 existingJob.state == AppConstants.jobStateFailed ||
@@ -297,8 +332,7 @@ class NotificationReconciler {
                 AppConstants.triggerKmOverdue,
               );
 
-              final delivered =
-                  await notificationService.showImmediateNotification(
+              final delivered = await notificationService.showImmediateNotification(
                 id: notifId,
                 title: 'Perawatan Jatuh Tempo: ${schedule.name}',
                 body:
@@ -311,9 +345,9 @@ class NotificationReconciler {
 
               final nowIso = DateTime.now().toIso8601String();
               if (existingJob != null) {
-                await (db.update(db.notificationJobs)
-                      ..where((tbl) => tbl.id.equals(existingJob.id)))
-                    .write(
+                await (db.update(
+                  db.notificationJobs,
+                )..where((tbl) => tbl.id.equals(existingJob.id))).write(
                   NotificationJobsCompanion(
                     state: Value(state),
                     plannedAt: Value(nowIso),
@@ -321,7 +355,9 @@ class NotificationReconciler {
                   ),
                 );
               } else {
-                await db.into(db.notificationJobs).insert(
+                await db
+                    .into(db.notificationJobs)
+                    .insert(
                       NotificationJobsCompanion.insert(
                         id: _uuid.v4(),
                         maintenanceScheduleId: schedule.id,
@@ -345,26 +381,28 @@ class NotificationReconciler {
   }
 
   Future<NotificationCancelResult> cancelJobsForSchedule(
-      String scheduleId) async {
+    String scheduleId,
+  ) async {
     try {
-      final jobs = await (db.select(db.notificationJobs)
-            ..where((tbl) => tbl.maintenanceScheduleId.equals(scheduleId)))
-          .get();
+      final jobs = await (db.select(
+        db.notificationJobs,
+      )..where((tbl) => tbl.maintenanceScheduleId.equals(scheduleId))).get();
 
       NotificationCancelResult? firstFailure;
 
       for (final job in jobs) {
-        final res = await notificationService
-            .cancelNotification(job.platformNotificationId);
+        final res = await notificationService.cancelNotification(
+          job.platformNotificationId,
+        );
         if (res.isSuccess) {
-          await (db.delete(db.notificationJobs)
-                ..where((tbl) => tbl.id.equals(job.id)))
-              .go();
+          await (db.delete(
+            db.notificationJobs,
+          )..where((tbl) => tbl.id.equals(job.id))).go();
         } else {
           firstFailure ??= res;
-          await (db.update(db.notificationJobs)
-                ..where((tbl) => tbl.id.equals(job.id)))
-              .write(
+          await (db.update(
+            db.notificationJobs,
+          )..where((tbl) => tbl.id.equals(job.id))).write(
             NotificationJobsCompanion(
               state: const Value(AppConstants.jobStateFailed),
               updatedAt: Value(DateTime.now().toIso8601String()),
@@ -383,11 +421,12 @@ class NotificationReconciler {
   }
 
   Future<NotificationCancelResult> cancelJobsForMotorcycle(
-      String motorcycleId) async {
+    String motorcycleId,
+  ) async {
     try {
-      final scheduleRows = await (db.select(db.maintenanceSchedules)
-            ..where((tbl) => tbl.motorcycleId.equals(motorcycleId)))
-          .get();
+      final scheduleRows = await (db.select(
+        db.maintenanceSchedules,
+      )..where((tbl) => tbl.motorcycleId.equals(motorcycleId))).get();
       for (final s in scheduleRows) {
         final res = await cancelJobsForSchedule(s.id);
         if (!res.isSuccess) {
@@ -410,11 +449,11 @@ class NotificationReconciler {
       await (db.update(db.notificationJobs)
             ..where((tbl) => tbl.state.equals(AppConstants.jobStateScheduled)))
           .write(
-        NotificationJobsCompanion(
-          state: Value(targetState),
-          updatedAt: Value(DateTime.now().toIso8601String()),
-        ),
-      );
+            NotificationJobsCompanion(
+              state: Value(targetState),
+              updatedAt: Value(DateTime.now().toIso8601String()),
+            ),
+          );
       return res;
     } catch (e) {
       return NotificationCancelResult.failure(e.toString());
@@ -433,26 +472,36 @@ class NotificationReconciler {
   Future<void> handleTimezoneChanged({required String newTimezone}) async {
     try {
       // 1. Cancel all currently scheduled date jobs
-      final scheduledDateJobs = await (db.select(db.notificationJobs)
-            ..where((tbl) =>
-                tbl.triggerType.equals(AppConstants.triggerDateDue) &
-                tbl.state.equals(AppConstants.jobStateScheduled)))
-          .get();
+      final scheduledDateJobs =
+          await (db.select(db.notificationJobs)..where(
+                (tbl) =>
+                    tbl.triggerType.equals(AppConstants.triggerDateDue) &
+                    tbl.state.equals(AppConstants.jobStateScheduled),
+              ))
+              .get();
 
       for (final job in scheduledDateJobs) {
-        await notificationService.cancelNotification(job.platformNotificationId);
-        await (db.update(db.notificationJobs)
-              ..where((tbl) => tbl.id.equals(job.id)))
-            .write(
+        final cancelRes = await notificationService.cancelNotification(
+          job.platformNotificationId,
+        );
+        final newState = cancelRes.isSuccess
+            ? AppConstants.jobStateCancelled
+            : AppConstants.jobStateFailed;
+
+        await (db.update(
+          db.notificationJobs,
+        )..where((tbl) => tbl.id.equals(job.id))).write(
           NotificationJobsCompanion(
-            state: const Value(AppConstants.jobStateCancelled),
+            state: Value(newState),
             updatedAt: Value(DateTime.now().toIso8601String()),
           ),
         );
       }
 
       // 2. Persist new timezone in settings
-      await db.into(db.appSettings).insertOnConflictUpdate(
+      await db
+          .into(db.appSettings)
+          .insertOnConflictUpdate(
             AppSettingsCompanion.insert(
               key: AppConstants.keyLastKnownTimezone,
               value: newTimezone,

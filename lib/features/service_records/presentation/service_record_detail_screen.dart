@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,10 +15,7 @@ import 'service_record_form_screen.dart';
 class ServiceRecordDetailScreen extends ConsumerStatefulWidget {
   final String recordId;
 
-  const ServiceRecordDetailScreen({
-    super.key,
-    required this.recordId,
-  });
+  const ServiceRecordDetailScreen({super.key, required this.recordId});
 
   @override
   ConsumerState<ServiceRecordDetailScreen> createState() =>
@@ -35,8 +33,9 @@ class _ServiceRecordDetailScreenState
   }
 
   void _loadRecord() {
-    _recordFuture =
-        ref.read(serviceRecordRepositoryProvider).getById(widget.recordId);
+    _recordFuture = ref
+        .read(serviceRecordRepositoryProvider)
+        .getById(widget.recordId);
   }
 
   Future<void> _confirmDeleteAttachment(String attachmentId) async {
@@ -50,15 +49,25 @@ class _ServiceRecordDetailScreenState
 
     if (confirm == true) {
       final repo = ref.read(serviceRecordRepositoryProvider);
-      await repo.deleteAttachment(attachmentId);
+      final cleanupResult = await repo.deleteAttachment(attachmentId);
       ref.invalidate(motorcycleServiceRecordsProvider);
       if (mounted) {
         setState(() {
           _loadRecord();
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Foto nota berhasil dihapus.')),
-        );
+        if (cleanupResult.isComplete) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Foto nota berhasil dihapus.')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Data foto dihapus dari database. Berkas fisik akan dibersihkan di latar belakang.',
+              ),
+            ),
+          );
+        }
       }
     }
   }
@@ -67,23 +76,44 @@ class _ServiceRecordDetailScreenState
     final confirm = await ConfirmationDialog.show(
       context,
       title: 'Hapus Catatan Servis?',
-      message:
-          'Catatan servis ini dan seluruh lampiran foto nota akan dihapus secara permanen. Status jadwal perawatan terkait akan disesuaikan kembali.',
+      message: 'Catatan servis ini dan seluruh lampiran foto nota akan dihapus secara permanen. Status jadwal perawatan terkait akan disesuaikan kembali.',
       confirmLabel: 'Hapus',
       isDestructive: true,
     );
 
     if (confirm == true) {
       final repo = ref.read(serviceRecordRepositoryProvider);
-      await repo.deleteRecord(record.id);
+      final deleteResult = await repo.deleteRecord(record.id);
 
       ref.invalidate(motorcycleServiceRecordsProvider);
       ref.invalidate(activeMotorcycleMonthExpenseProvider);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Catatan servis berhasil dihapus.')),
-      );
+      if (deleteResult.isFullSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Catatan servis dan seluruh berkas lampiran berhasil dihapus.',
+            ),
+          ),
+        );
+      } else if (deleteResult.databaseSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Catatan servis dihapus. Sebagian berkas lampiran akan dibersihkan di latar belakang.',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              deleteResult.errorMessage ?? 'Gagal menghapus catatan servis.',
+            ),
+          ),
+        );
+      }
       context.pop();
     }
   }
@@ -109,11 +139,16 @@ class _ServiceRecordDetailScreenState
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.receipt_long_outlined,
-                        size: 64, color: AppColors.textMuted),
+                    const Icon(
+                      Icons.receipt_long_outlined,
+                      size: 64,
+                      color: AppColors.textMuted,
+                    ),
                     const SizedBox(height: 16),
-                    const Text('Catatan servis tidak ditemukan.',
-                        style: AppTypography.headlineSmall),
+                    const Text(
+                      'Catatan servis tidak ditemukan.',
+                      style: AppTypography.headlineSmall,
+                    ),
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () => context.pop(),
@@ -148,8 +183,10 @@ class _ServiceRecordDetailScreenState
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.delete_outline_rounded,
-                    color: AppColors.statusTerlambat),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: AppColors.statusTerlambat,
+                ),
                 tooltip: 'Hapus Servis',
                 onPressed: () => _deleteRecord(record),
               ),
@@ -171,13 +208,17 @@ class _ServiceRecordDetailScreenState
                           children: [
                             Text(
                               AppFormatters.formatDateIndonesian(
-                                  record.serviceDate),
-                              style: AppTypography.titleMedium
-                                  .copyWith(fontWeight: FontWeight.w700),
+                                record.serviceDate,
+                              ),
+                              style: AppTypography.titleMedium.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.primaryContainer,
                                 borderRadius: BorderRadius.circular(8),
@@ -197,8 +238,11 @@ class _ServiceRecordDetailScreenState
                           const Divider(height: 20),
                           Row(
                             children: [
-                              const Icon(Icons.location_on_outlined,
-                                  size: 18, color: AppColors.textSecondary),
+                              const Icon(
+                                Icons.location_on_outlined,
+                                size: 18,
+                                color: AppColors.textSecondary,
+                              ),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
@@ -231,17 +275,22 @@ class _ServiceRecordDetailScreenState
                     itemBuilder: (ctx, i) {
                       final item = record.items[i];
                       return ListTile(
-                        title: Text(item.itemName,
-                            style: AppTypography.titleSmall),
+                        title: Text(
+                          item.itemName,
+                          style: AppTypography.titleSmall,
+                        ),
                         subtitle:
                             item.category != null && item.category!.isNotEmpty
-                                ? Text(item.category!,
-                                    style: AppTypography.bodySmall)
-                                : null,
+                            ? Text(
+                                item.category!,
+                                style: AppTypography.bodySmall,
+                              )
+                            : null,
                         trailing: Text(
                           AppFormatters.formatRupiah(item.itemCost),
-                          style: AppTypography.titleSmall
-                              .copyWith(fontWeight: FontWeight.w700),
+                          style: AppTypography.titleSmall.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       );
                     },
@@ -255,14 +304,16 @@ class _ServiceRecordDetailScreenState
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       children: [
-                        _buildCostRow('Total Pekerjaan',
-                            AppFormatters.formatRupiah(record.itemsTotalCost)),
+                        _buildCostRow(
+                          'Total Pekerjaan',
+                          AppFormatters.formatRupiah(record.itemsTotalCost),
+                        ),
                         if (record.additionalCost > 0) ...[
                           const SizedBox(height: 8),
                           _buildCostRow(
-                              'Biaya Tambahan / Jasa',
-                              AppFormatters.formatRupiah(
-                                  record.additionalCost)),
+                            'Biaya Tambahan / Jasa',
+                            AppFormatters.formatRupiah(record.additionalCost),
+                          ),
                         ],
                         const Divider(height: 20),
                         _buildCostRow(
@@ -278,22 +329,28 @@ class _ServiceRecordDetailScreenState
 
                 // Notes
                 if (record.notes != null && record.notes!.isNotEmpty) ...[
-                  const Text('Catatan Kunjungan',
-                      style: AppTypography.headlineSmall),
+                  const Text(
+                    'Catatan Kunjungan',
+                    style: AppTypography.headlineSmall,
+                  ),
                   const SizedBox(height: 8),
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child:
-                          Text(record.notes!, style: AppTypography.bodyLarge),
+                      child: Text(
+                        record.notes!,
+                        style: AppTypography.bodyLarge,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
                 ],
 
                 // Attachments Gallery
-                const Text('Foto Nota & Bukti Servis',
-                    style: AppTypography.headlineSmall),
+                const Text(
+                  'Foto Nota & Bukti Servis',
+                  style: AppTypography.headlineSmall,
+                ),
                 const SizedBox(height: 8),
                 if (record.attachments.isEmpty) ...[
                   const Card(
@@ -313,11 +370,11 @@ class _ServiceRecordDetailScreenState
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      childAspectRatio: 1.0,
-                    ),
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 1.0,
+                        ),
                     itemCount: record.attachments.length,
                     itemBuilder: (ctx, i) {
                       final att = record.attachments[i];
@@ -339,15 +396,17 @@ class _ServiceRecordDetailScreenState
                                           fit: BoxFit.cover,
                                           errorBuilder: (_, __, ___) =>
                                               const Center(
-                                            child: Icon(
-                                                Icons.broken_image_rounded,
-                                                size: 36),
-                                          ),
+                                                child: Icon(
+                                                  Icons.broken_image_rounded,
+                                                  size: 36,
+                                                ),
+                                              ),
                                         )
                                       : const Center(
                                           child: Icon(
-                                              Icons.broken_image_rounded,
-                                              size: 36),
+                                            Icons.broken_image_rounded,
+                                            size: 36,
+                                          ),
                                         ),
                                 ),
                               ),
@@ -421,8 +480,11 @@ class _ServiceRecordDetailScreenState
               child: Image.file(file, fit: BoxFit.contain),
             ),
             IconButton(
-              icon: const Icon(Icons.close_rounded,
-                  color: Colors.white, size: 28),
+              icon: const Icon(
+                Icons.close_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
               onPressed: () => Navigator.of(ctx).pop(),
             ),
           ],

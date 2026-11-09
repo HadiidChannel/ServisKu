@@ -7,8 +7,9 @@ import 'package:servis/database/app_database.dart';
 import 'package:servis/features/motorcycles/presentation/add_edit_motorcycle_screen.dart';
 
 void main() {
-  testWidgets('AddEditMotorcycleScreen validates required fields on submit',
-      (WidgetTester tester) async {
+  testWidgets('AddEditMotorcycleScreen validates required fields on submit', (
+    WidgetTester tester,
+  ) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.0;
     addTearDown(() => tester.view.resetPhysicalSize());
@@ -17,12 +18,8 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          databaseProvider.overrideWithValue(db),
-        ],
-        child: const MaterialApp(
-          home: AddEditMotorcycleScreen(),
-        ),
+        overrides: [databaseProvider.overrideWithValue(db)],
+        child: const MaterialApp(home: AddEditMotorcycleScreen()),
       ),
     );
 

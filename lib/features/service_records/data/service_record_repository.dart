@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
@@ -48,6 +49,20 @@ class UpdateServiceRecordResult {
       totalPhotosRequested == photosSavedSuccessfully;
 }
 
+class RecordDeletionResult {
+  final bool databaseSuccess;
+  final AttachmentCleanupResult cleanupResult;
+  final String? errorMessage;
+
+  const RecordDeletionResult({
+    required this.databaseSuccess,
+    required this.cleanupResult,
+    this.errorMessage,
+  });
+
+  bool get isFullSuccess => databaseSuccess && cleanupResult.isComplete;
+}
+
 class ServiceRecordRepository {
   final AppDatabase db;
   final AttachmentStorageService attachmentService;
@@ -78,26 +93,30 @@ class ServiceRecordRepository {
       createdAt: DateTime.parse(row.createdAt),
       updatedAt: DateTime.parse(row.updatedAt),
       items: itemRows
-          .map((i) => ServiceRecordItem(
-                id: i.id,
-                serviceRecordId: i.serviceRecordId,
-                maintenanceScheduleId: i.maintenanceScheduleId,
-                itemName: i.itemName,
-                category: i.category,
-                itemCost: i.itemCost,
-                notes: i.notes,
-              ))
+          .map(
+            (i) => ServiceRecordItem(
+              id: i.id,
+              serviceRecordId: i.serviceRecordId,
+              maintenanceScheduleId: i.maintenanceScheduleId,
+              itemName: i.itemName,
+              category: i.category,
+              itemCost: i.itemCost,
+              notes: i.notes,
+            ),
+          )
           .toList(),
       attachments: attachmentRows
-          .map((a) => ServiceAttachment(
-                id: a.id,
-                serviceRecordId: a.serviceRecordId,
-                localPath: a.localPath,
-                fileName: a.fileName,
-                mimeType: a.mimeType,
-                fileSize: a.fileSize,
-                createdAt: DateTime.parse(a.createdAt),
-              ))
+          .map(
+            (a) => ServiceAttachment(
+              id: a.id,
+              serviceRecordId: a.serviceRecordId,
+              localPath: a.localPath,
+              fileName: a.fileName,
+              mimeType: a.mimeType,
+              fileSize: a.fileSize,
+              createdAt: DateTime.parse(a.createdAt),
+            ),
+          )
           .toList(),
     );
   }
@@ -130,12 +149,12 @@ class ServiceRecordRepository {
     final rows = await query.get();
     final records = <ServiceRecord>[];
     for (final row in rows) {
-      final items = await (db.select(db.serviceRecordItems)
-            ..where((tbl) => tbl.serviceRecordId.equals(row.id)))
-          .get();
-      final attachments = await (db.select(db.serviceAttachments)
-            ..where((tbl) => tbl.serviceRecordId.equals(row.id)))
-          .get();
+      final items = await (db.select(
+        db.serviceRecordItems,
+      )..where((tbl) => tbl.serviceRecordId.equals(row.id))).get();
+      final attachments = await (db.select(
+        db.serviceAttachments,
+      )..where((tbl) => tbl.serviceRecordId.equals(row.id))).get();
       records.add(_toDomain(row, items, attachments));
     }
     return records;
@@ -147,12 +166,12 @@ class ServiceRecordRepository {
     final row = await query.getSingleOrNull();
     if (row == null) return null;
 
-    final items = await (db.select(db.serviceRecordItems)
-          ..where((tbl) => tbl.serviceRecordId.equals(row.id)))
-        .get();
-    final attachments = await (db.select(db.serviceAttachments)
-          ..where((tbl) => tbl.serviceRecordId.equals(row.id)))
-        .get();
+    final items = await (db.select(
+      db.serviceRecordItems,
+    )..where((tbl) => tbl.serviceRecordId.equals(row.id))).get();
+    final attachments = await (db.select(
+      db.serviceAttachments,
+    )..where((tbl) => tbl.serviceRecordId.equals(row.id))).get();
 
     return _toDomain(row, items, attachments);
   }
@@ -191,17 +210,19 @@ class ServiceRecordRepository {
     }
 
     // Validate odometer chronology against existing readings for this motorcycle
-    final existingOdoRows = await (db.select(db.odometerReadings)
-          ..where((tbl) => tbl.motorcycleId.equals(motorcycleId)))
-        .get();
+    final existingOdoRows = await (db.select(
+      db.odometerReadings,
+    )..where((tbl) => tbl.motorcycleId.equals(motorcycleId))).get();
     final chronologyItems = existingOdoRows
-        .map((r) => OdometerChronologyItem(
-              id: r.id,
-              readingDate: AppFormatters.parseDateBusiness(r.readingDate),
-              odometerKm: r.odometerKm,
-              createdAt: DateTime.parse(r.createdAt),
-              source: r.source,
-            ))
+        .map(
+          (r) => OdometerChronologyItem(
+            id: r.id,
+            readingDate: AppFormatters.parseDateBusiness(r.readingDate),
+            odometerKm: r.odometerKm,
+            createdAt: DateTime.parse(r.createdAt),
+            source: r.source,
+          ),
+        )
         .toList();
 
     AppValidators.validateOdometerChronology(
@@ -216,7 +237,9 @@ class ServiceRecordRepository {
 
     // Save record, items, and linked odometer reading atomically in a transaction
     await db.transaction(() async {
-      await db.into(db.serviceRecords).insert(
+      await db
+          .into(db.serviceRecords)
+          .insert(
             ServiceRecordsCompanion.insert(
               id: recordId,
               motorcycleId: motorcycleId,
@@ -232,12 +255,15 @@ class ServiceRecordRepository {
 
       for (final item in items) {
         final itemId = _uuid.v4();
-        await db.into(db.serviceRecordItems).insert(
+        await db
+            .into(db.serviceRecordItems)
+            .insert(
               ServiceRecordItemsCompanion.insert(
                 id: itemId,
                 serviceRecordId: recordId,
-                maintenanceScheduleId:
-                    Value(item['maintenanceScheduleId'] as String?),
+                maintenanceScheduleId: Value(
+                  item['maintenanceScheduleId'] as String?,
+                ),
                 itemName: (item['itemName'] as String).trim(),
                 category: Value((item['category'] as String?)?.trim()),
                 itemCost: Value(item['itemCost'] as int? ?? 0),
@@ -247,7 +273,9 @@ class ServiceRecordRepository {
       }
 
       // Record odometer reading from service with explicit link to serviceRecordId
-      await db.into(db.odometerReadings).insert(
+      await db
+          .into(db.odometerReadings)
+          .insert(
             OdometerReadingsCompanion.insert(
               id: _uuid.v4(),
               motorcycleId: motorcycleId,
@@ -255,17 +283,21 @@ class ServiceRecordRepository {
               readingDate: serviceDateStr,
               source: AppConstants.odoSourceService,
               serviceRecordId: Value(recordId),
-              notes: Value(workshopName != null && workshopName.isNotEmpty
-                  ? 'Servis di $workshopName'
-                  : 'Kunjungan servis'),
+              notes: Value(
+                workshopName != null && workshopName.isNotEmpty
+                    ? 'Servis di $workshopName'
+                    : 'Kunjungan servis',
+              ),
               createdAt: nowIso,
             ),
           );
 
       // Recalculate affected schedules without immediate reconciler triggers inside transaction
       for (final scheduleId in affectedScheduleIds) {
-        await maintenanceRepository.recalculateSchedule(scheduleId,
-            triggerReconcile: false);
+        await maintenanceRepository.recalculateSchedule(
+          scheduleId,
+          triggerReconcile: false,
+        );
       }
     });
 
@@ -285,7 +317,9 @@ class ServiceRecordRepository {
           );
 
           try {
-            await db.into(db.serviceAttachments).insert(
+            await db
+                .into(db.serviceAttachments)
+                .insert(
                   ServiceAttachmentsCompanion.insert(
                     id: _uuid.v4(),
                     serviceRecordId: recordId,
@@ -340,9 +374,9 @@ class ServiceRecordRepository {
     );
 
     // Verify existing service record and protect motorcycle relationship invariant
-    final existingRecord = await (db.select(db.serviceRecords)
-          ..where((tbl) => tbl.id.equals(recordId)))
-        .getSingleOrNull();
+    final existingRecord = await (db.select(
+      db.serviceRecords,
+    )..where((tbl) => tbl.id.equals(recordId))).getSingleOrNull();
     if (existingRecord == null) {
       throw const ValidationException(
         'SRV-404',
@@ -357,9 +391,9 @@ class ServiceRecordRepository {
     }
 
     // Collect all schedule IDs that were previously linked
-    final oldItems = await (db.select(db.serviceRecordItems)
-          ..where((tbl) => tbl.serviceRecordId.equals(recordId)))
-        .get();
+    final oldItems = await (db.select(
+      db.serviceRecordItems,
+    )..where((tbl) => tbl.serviceRecordId.equals(recordId))).get();
     final affectedScheduleIds = <String>{};
     for (final oi in oldItems) {
       if (oi.maintenanceScheduleId != null) {
@@ -383,21 +417,23 @@ class ServiceRecordRepository {
     }
 
     // Find linked odometer reading and validate chronological integrity
-    final existingOdo = await (db.select(db.odometerReadings)
-          ..where((tbl) => tbl.serviceRecordId.equals(recordId)))
-        .getSingleOrNull();
+    final existingOdo = await (db.select(
+      db.odometerReadings,
+    )..where((tbl) => tbl.serviceRecordId.equals(recordId))).getSingleOrNull();
 
-    final existingOdoRows = await (db.select(db.odometerReadings)
-          ..where((tbl) => tbl.motorcycleId.equals(motorcycleId)))
-        .get();
+    final existingOdoRows = await (db.select(
+      db.odometerReadings,
+    )..where((tbl) => tbl.motorcycleId.equals(motorcycleId))).get();
     final chronologyItems = existingOdoRows
-        .map((r) => OdometerChronologyItem(
-              id: r.id,
-              readingDate: AppFormatters.parseDateBusiness(r.readingDate),
-              odometerKm: r.odometerKm,
-              createdAt: DateTime.parse(r.createdAt),
-              source: r.source,
-            ))
+        .map(
+          (r) => OdometerChronologyItem(
+            id: r.id,
+            readingDate: AppFormatters.parseDateBusiness(r.readingDate),
+            odometerKm: r.odometerKm,
+            createdAt: DateTime.parse(r.createdAt),
+            source: r.source,
+          ),
+        )
         .toList();
 
     AppValidators.validateOdometerChronology(
@@ -411,9 +447,9 @@ class ServiceRecordRepository {
     final serviceDateStr = AppFormatters.formatDateBusiness(serviceDate);
 
     await db.transaction(() async {
-      await (db.update(db.serviceRecords)
-            ..where((tbl) => tbl.id.equals(recordId)))
-          .write(
+      await (db.update(
+        db.serviceRecords,
+      )..where((tbl) => tbl.id.equals(recordId))).write(
         ServiceRecordsCompanion(
           serviceDate: Value(serviceDateStr),
           odometerKm: Value(odometerKm),
@@ -425,24 +461,29 @@ class ServiceRecordRepository {
       );
 
       // Update linked odometer reading
-      final existingOdo = await (db.select(db.odometerReadings)
-            ..where((tbl) => tbl.serviceRecordId.equals(recordId)))
-          .getSingleOrNull();
+      final existingOdo =
+          await (db.select(db.odometerReadings)
+                ..where((tbl) => tbl.serviceRecordId.equals(recordId)))
+              .getSingleOrNull();
 
       if (existingOdo != null) {
-        await (db.update(db.odometerReadings)
-              ..where((tbl) => tbl.id.equals(existingOdo.id)))
-            .write(
+        await (db.update(
+          db.odometerReadings,
+        )..where((tbl) => tbl.id.equals(existingOdo.id))).write(
           OdometerReadingsCompanion(
             odometerKm: Value(odometerKm),
             readingDate: Value(serviceDateStr),
-            notes: Value(workshopName != null && workshopName.isNotEmpty
-                ? 'Servis di $workshopName'
-                : 'Kunjungan servis'),
+            notes: Value(
+              workshopName != null && workshopName.isNotEmpty
+                  ? 'Servis di $workshopName'
+                  : 'Kunjungan servis',
+            ),
           ),
         );
       } else {
-        await db.into(db.odometerReadings).insert(
+        await db
+            .into(db.odometerReadings)
+            .insert(
               OdometerReadingsCompanion.insert(
                 id: _uuid.v4(),
                 motorcycleId: motorcycleId,
@@ -450,27 +491,32 @@ class ServiceRecordRepository {
                 readingDate: serviceDateStr,
                 source: AppConstants.odoSourceService,
                 serviceRecordId: Value(recordId),
-                notes: Value(workshopName != null && workshopName.isNotEmpty
-                    ? 'Servis di $workshopName'
-                    : 'Kunjungan servis'),
+                notes: Value(
+                  workshopName != null && workshopName.isNotEmpty
+                      ? 'Servis di $workshopName'
+                      : 'Kunjungan servis',
+                ),
                 createdAt: nowIso,
               ),
             );
       }
 
       // Replace items
-      await (db.delete(db.serviceRecordItems)
-            ..where((tbl) => tbl.serviceRecordId.equals(recordId)))
-          .go();
+      await (db.delete(
+        db.serviceRecordItems,
+      )..where((tbl) => tbl.serviceRecordId.equals(recordId))).go();
 
       for (final item in items) {
         final itemId = _uuid.v4();
-        await db.into(db.serviceRecordItems).insert(
+        await db
+            .into(db.serviceRecordItems)
+            .insert(
               ServiceRecordItemsCompanion.insert(
                 id: itemId,
                 serviceRecordId: recordId,
-                maintenanceScheduleId:
-                    Value(item['maintenanceScheduleId'] as String?),
+                maintenanceScheduleId: Value(
+                  item['maintenanceScheduleId'] as String?,
+                ),
                 itemName: (item['itemName'] as String).trim(),
                 category: Value((item['category'] as String?)?.trim()),
                 itemCost: Value(item['itemCost'] as int? ?? 0),
@@ -481,8 +527,10 @@ class ServiceRecordRepository {
 
       // Recalculate all affected schedules without immediate reconciler triggers inside transaction
       for (final scheduleId in affectedScheduleIds) {
-        await maintenanceRepository.recalculateSchedule(scheduleId,
-            triggerReconcile: false);
+        await maintenanceRepository.recalculateSchedule(
+          scheduleId,
+          triggerReconcile: false,
+        );
       }
     });
 
@@ -509,7 +557,9 @@ class ServiceRecordRepository {
           );
 
           try {
-            await db.into(db.serviceAttachments).insert(
+            await db
+                .into(db.serviceAttachments)
+                .insert(
                   ServiceAttachmentsCompanion.insert(
                     id: _uuid.v4(),
                     serviceRecordId: recordId,
@@ -543,14 +593,14 @@ class ServiceRecordRepository {
     );
   }
 
-  Future<void> deleteRecord(String id) async {
+  Future<RecordDeletionResult> deleteRecord(String id) async {
     // 1. Get attachments and linked schedules before deletion
-    final attachments = await (db.select(db.serviceAttachments)
-          ..where((tbl) => tbl.serviceRecordId.equals(id)))
-        .get();
-    final items = await (db.select(db.serviceRecordItems)
-          ..where((tbl) => tbl.serviceRecordId.equals(id)))
-        .get();
+    final attachments = await (db.select(
+      db.serviceAttachments,
+    )..where((tbl) => tbl.serviceRecordId.equals(id))).get();
+    final items = await (db.select(
+      db.serviceRecordItems,
+    )..where((tbl) => tbl.serviceRecordId.equals(id))).get();
 
     final affectedScheduleIds = <String>{};
     for (final item in items) {
@@ -560,42 +610,83 @@ class ServiceRecordRepository {
     }
 
     // 2. Delete database record and linked odometer reading in transaction
-    await db.transaction(() async {
-      await (db.delete(db.odometerReadings)
-            ..where((tbl) => tbl.serviceRecordId.equals(id)))
-          .go();
+    bool dbSuccess = false;
+    try {
+      await db.transaction(() async {
+        await (db.delete(
+          db.odometerReadings,
+        )..where((tbl) => tbl.serviceRecordId.equals(id))).go();
 
-      await (db.delete(db.serviceRecords)..where((tbl) => tbl.id.equals(id)))
-          .go();
+        await (db.delete(
+          db.serviceRecords,
+        )..where((tbl) => tbl.id.equals(id))).go();
 
-      // Recalculate schedules and restore baselines without immediate reconciler triggers inside transaction
-      for (final scheduleId in affectedScheduleIds) {
-        await maintenanceRepository.recalculateSchedule(scheduleId,
-            triggerReconcile: false);
-      }
-    });
+        // Recalculate schedules and restore baselines without immediate reconciler triggers inside transaction
+        for (final scheduleId in affectedScheduleIds) {
+          await maintenanceRepository.recalculateSchedule(
+            scheduleId,
+            triggerReconcile: false,
+          );
+        }
+      });
+      dbSuccess = true;
+    } catch (e) {
+      return RecordDeletionResult(
+        databaseSuccess: false,
+        cleanupResult: AttachmentCleanupResult.empty,
+        errorMessage: 'Gagal menghapus catatan servis di database: $e',
+      );
+    }
 
     // 3. Delete physical files after transaction commits
+    int deletedCount = 0;
+    int alreadyMissingCount = 0;
+    int failedCount = 0;
+    final failedPaths = <String>[];
+
     for (final att in attachments) {
-      await attachmentService.deleteAttachmentFile(att.localPath);
+      final res = await attachmentService.deleteAttachmentFile(att.localPath);
+      deletedCount += res.deletedCount;
+      alreadyMissingCount += res.alreadyMissingCount;
+      failedCount += res.failedCount;
+      failedPaths.addAll(res.failedPaths);
     }
-    await attachmentService.deleteRecordAttachmentsDirectory(id);
+
+    final dirRes = await attachmentService.deleteRecordAttachmentsDirectory(id);
+    deletedCount += dirRes.deletedCount;
+    alreadyMissingCount += dirRes.alreadyMissingCount;
+    failedCount += dirRes.failedCount;
+    failedPaths.addAll(dirRes.failedPaths);
+
+    final cleanupResult = AttachmentCleanupResult(
+      deletedCount: deletedCount,
+      alreadyMissingCount: alreadyMissingCount,
+      failedCount: failedCount,
+      failedPaths: failedPaths,
+    );
 
     if (notificationReconciler != null) {
       await notificationReconciler!.reconcileAll();
     }
+
+    return RecordDeletionResult(
+      databaseSuccess: dbSuccess,
+      cleanupResult: cleanupResult,
+    );
   }
 
-  Future<void> deleteAttachment(String attachmentId) async {
-    final attRow = await (db.select(db.serviceAttachments)
-          ..where((tbl) => tbl.id.equals(attachmentId)))
-        .getSingleOrNull();
+  Future<AttachmentCleanupResult> deleteAttachment(String attachmentId) async {
+    final attRow = await (db.select(
+      db.serviceAttachments,
+    )..where((tbl) => tbl.id.equals(attachmentId))).getSingleOrNull();
 
-    if (attRow != null) {
-      await (db.delete(db.serviceAttachments)
-            ..where((tbl) => tbl.id.equals(attachmentId)))
-          .go();
-      await attachmentService.deleteAttachmentFile(attRow.localPath);
+    if (attRow == null) {
+      return const AttachmentCleanupResult(alreadyMissingCount: 1);
     }
+
+    await (db.delete(
+      db.serviceAttachments,
+    )..where((tbl) => tbl.id.equals(attachmentId))).go();
+    return await attachmentService.deleteAttachmentFile(attRow.localPath);
   }
 }

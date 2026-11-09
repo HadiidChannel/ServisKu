@@ -1,5 +1,7 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+
 import '../../app/theme/app_colors.dart';
 
 /// Custom automotive logo for ServisKu
@@ -7,11 +9,7 @@ class ServisKuLogoWidget extends StatelessWidget {
   final double size;
   final bool showText;
 
-  const ServisKuLogoWidget({
-    super.key,
-    this.size = 64,
-    this.showText = true,
-  });
+  const ServisKuLogoWidget({super.key, this.size = 64, this.showText = true});
 
   @override
   Widget build(BuildContext context) {
@@ -19,10 +17,7 @@ class ServisKuLogoWidget extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        CustomPaint(
-          size: Size(size, size),
-          painter: _LogoPainter(),
-        ),
+        CustomPaint(size: Size(size, size), painter: _LogoPainter()),
         if (showText) ...[
           const SizedBox(width: 12),
           Column(
@@ -97,7 +92,8 @@ class _LogoPainter extends CustomPainter {
 
     // Gauge needle pointing up-right
     final needlePaint = Paint()
-      ..color = const Color(0xFFFFD54F) // Gold/yellow needle
+      ..color =
+          const Color(0xFFFFD54F) // Gold/yellow needle
       ..style = PaintingStyle.stroke
       ..strokeWidth = w * 0.07
       ..strokeCap = StrokeCap.round;
@@ -119,8 +115,9 @@ class _LogoPainter extends CustomPainter {
       ..color = Colors.white.withValues(alpha: 0.9)
       ..style = PaintingStyle.fill;
     final wrenchPath = Path()
-      ..addOval(Rect.fromCircle(
-          center: Offset(w * 0.75, h * 0.28), radius: w * 0.08));
+      ..addOval(
+        Rect.fromCircle(center: Offset(w * 0.75, h * 0.28), radius: w * 0.08),
+      );
     canvas.drawPath(wrenchPath, wrenchPaint);
   }
 
@@ -168,7 +165,10 @@ class _MotorcycleHeroPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawOval(
       Rect.fromCenter(
-          center: Offset(cx, h * 0.88), width: w * 0.75, height: h * 0.12),
+        center: Offset(cx, h * 0.88),
+        width: w * 0.75,
+        height: h * 0.12,
+      ),
       shadowPaint,
     );
 
@@ -218,12 +218,16 @@ class _MotorcycleHeroPainter extends CustomPainter {
     if (motorcycleType.toLowerCase() == 'sport') {
       // Sport bike aggressive tank and fairing
       bodyPath.moveTo(
-          rearCenter.dx - wheelRadius * 0.4, rearCenter.dy - wheelRadius * 0.7);
+        rearCenter.dx - wheelRadius * 0.4,
+        rearCenter.dy - wheelRadius * 0.7,
+      );
       bodyPath.lineTo(cx - w * 0.08, h * 0.35); // seat
       bodyPath.lineTo(cx + w * 0.04, h * 0.25); // high tank
       bodyPath.lineTo(cx + w * 0.18, h * 0.30); // front cowl
-      bodyPath.lineTo(frontCenter.dx - wheelRadius * 0.2,
-          frontCenter.dy - wheelRadius * 0.8);
+      bodyPath.lineTo(
+        frontCenter.dx - wheelRadius * 0.2,
+        frontCenter.dy - wheelRadius * 0.8,
+      );
       bodyPath.lineTo(cx, h * 0.65); // engine belly pan
       bodyPath.close();
 
@@ -235,11 +239,16 @@ class _MotorcycleHeroPainter extends CustomPainter {
       );
       // Swingarm
       canvas.drawLine(
-          Offset(cx - w * 0.02, h * 0.62), rearCenter, darkMetalPaint);
+        Offset(cx - w * 0.02, h * 0.62),
+        rearCenter,
+        darkMetalPaint,
+      );
     } else if (motorcycleType.toLowerCase() == 'bebek') {
       // Underbone / Bebek frame
       bodyPath.moveTo(
-          rearCenter.dx - wheelRadius * 0.3, rearCenter.dy - wheelRadius * 0.6);
+        rearCenter.dx - wheelRadius * 0.3,
+        rearCenter.dy - wheelRadius * 0.6,
+      );
       bodyPath.lineTo(cx - w * 0.05, h * 0.42); // seat
       bodyPath.lineTo(cx + w * 0.05, h * 0.48); // step-through dip
       bodyPath.lineTo(cx + w * 0.15, h * 0.30); // handlebar head
@@ -254,11 +263,16 @@ class _MotorcycleHeroPainter extends CustomPainter {
         darkMetalPaint,
       );
       canvas.drawLine(
-          Offset(cx - w * 0.02, h * 0.65), rearCenter, darkMetalPaint);
+        Offset(cx - w * 0.02, h * 0.65),
+        rearCenter,
+        darkMetalPaint,
+      );
     } else {
       // Matic / Scooter step-through with floorboard
       bodyPath.moveTo(
-          rearCenter.dx - wheelRadius * 0.4, rearCenter.dy - wheelRadius * 0.6);
+        rearCenter.dx - wheelRadius * 0.4,
+        rearCenter.dy - wheelRadius * 0.6,
+      );
       bodyPath.lineTo(cx - w * 0.06, h * 0.40); // seat
       bodyPath.lineTo(cx - w * 0.04, h * 0.58); // under-seat box
       bodyPath.lineTo(cx + w * 0.08, h * 0.58); // flat floorboard
@@ -285,10 +299,16 @@ class _MotorcycleHeroPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final barHead = Offset(cx + w * 0.14, h * 0.28);
-    canvas.drawLine(barHead,
-        Offset(barHead.dx - w * 0.03, barHead.dy - h * 0.08), handlePaint);
-    canvas.drawCircle(Offset(barHead.dx - w * 0.03, barHead.dy - h * 0.08),
-        h * 0.025, bodyPaint);
+    canvas.drawLine(
+      barHead,
+      Offset(barHead.dx - w * 0.03, barHead.dy - h * 0.08),
+      handlePaint,
+    );
+    canvas.drawCircle(
+      Offset(barHead.dx - w * 0.03, barHead.dy - h * 0.08),
+      h * 0.025,
+      bodyPaint,
+    );
 
     // Seat cushion
     final seatPaint = Paint()
@@ -306,9 +326,10 @@ class _MotorcycleHeroPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawOval(
       Rect.fromCenter(
-          center: Offset(cx + w * 0.20, h * 0.35),
-          width: w * 0.04,
-          height: h * 0.08),
+        center: Offset(cx + w * 0.20, h * 0.35),
+        width: w * 0.04,
+        height: h * 0.08,
+      ),
       lightPaint,
     );
   }
@@ -346,14 +367,12 @@ class EmptyIllustrationWidget extends StatelessWidget {
                 color: AppColors.primaryContainer.withValues(alpha: 0.6),
                 shape: BoxShape.circle,
                 border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.2), width: 2),
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                  width: 2,
+                ),
               ),
               child: Center(
-                child: Icon(
-                  icon,
-                  size: 48,
-                  color: AppColors.primary,
-                ),
+                child: Icon(icon, size: 48, color: AppColors.primary),
               ),
             ),
             const SizedBox(height: 20),

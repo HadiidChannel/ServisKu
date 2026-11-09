@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
@@ -104,10 +105,7 @@ _ValidationPayload _validateImageIsolate(Uint8List bytes) {
     );
   }
 
-  return _ValidationPayload(
-    isValid: true,
-    mimeType: mimeType,
-  );
+  return _ValidationPayload(isValid: true, mimeType: mimeType);
 }
 
 class _ProcessImageRequest {
@@ -225,7 +223,7 @@ class AttachmentStorageService {
   static bool _isCleanupRunning = false;
 
   AttachmentStorageService({Directory? baseDirectory})
-      : _customBaseDir = baseDirectory;
+    : _customBaseDir = baseDirectory;
 
   static String getThumbnailPath(String localPath) {
     final dir = p.dirname(localPath);
@@ -237,8 +235,62 @@ class AttachmentStorageService {
   bool _isSafePath(String targetPath, Directory baseDir) {
     final normTarget = p.normalize(p.absolute(targetPath));
     final normBase = p.normalize(p.absolute(baseDir.path));
-    return p.equals(normBase, normTarget) || p.isWithin(normBase, normTarget);
+
+    // 1. Strict lexical containment check
+    final isLexicallySafe =
+        p.equals(normBase, normTarget) || p.isWithin(normBase, normTarget);
+    if (!isLexicallySafe) return false;
+
+    // 2. Canonical real-path containment & symlink check
+    try {
+      final baseCanonical = p.normalize(baseDir.resolveSymbolicLinksSync());
+
+      // Reject symlink if it resolves outside the application attachments directory
+      if (FileSystemEntity.isLinkSync(normTarget)) {
+        final resolved = p.normalize(
+          Link(normTarget).resolveSymbolicLinksSync(),
+        );
+        if (!p.equals(baseCanonical, resolved) &&
+            !p.isWithin(baseCanonical, resolved)) {
+          return false;
+        }
+      }
+
+      // Check canonical path of existing file or directory
+      if (FileSystemEntity.typeSync(normTarget) !=
+          FileSystemEntityType.notFound) {
+        final targetCanonical = p.normalize(
+          File(normTarget).resolveSymbolicLinksSync(),
+        );
+        if (!p.equals(baseCanonical, targetCanonical) &&
+            !p.isWithin(baseCanonical, targetCanonical)) {
+          return false;
+        }
+      } else {
+        // For new files about to be created, check parent directory canonical resolution
+        var parent = Directory(p.dirname(normTarget));
+        while (!parent.existsSync() && parent.path != p.dirname(parent.path)) {
+          parent = Directory(p.dirname(parent.path));
+        }
+        if (parent.existsSync()) {
+          final parentCanonical = p.normalize(
+            parent.resolveSymbolicLinksSync(),
+          );
+          if (!p.equals(baseCanonical, parentCanonical) &&
+              !p.isWithin(baseCanonical, parentCanonical)) {
+            return false;
+          }
+        }
+      }
+    } catch (_) {
+      // On platforms or filesystems without symbolic link resolution, fall back to lexical containment
+    }
+
+    return true;
   }
+
+  bool isSafePathForTesting(String path, Directory base) =>
+      _isSafePath(path, base);
 
   Future<Directory> _getAttachmentsBaseDir() async {
     final custom = _customBaseDir;
@@ -330,7 +382,9 @@ class AttachmentStorageService {
     final validation = await validateImageFileAsync(sourceFile);
     if (!validation.isValid) {
       throw AttachmentException(
-          'ATT-001', validation.errorMessage ?? 'Format foto tidak valid.');
+        'ATT-001',
+        validation.errorMessage ?? 'Format foto tidak valid.',
+      );
     }
 
     try {
@@ -338,7 +392,9 @@ class AttachmentStorageService {
       final recordDir = Directory(p.join(baseDir.path, serviceRecordId));
       if (!_isSafePath(recordDir.path, baseDir)) {
         throw const AttachmentException(
-            'ATT-004', 'Lokasi penyimpanan tidak aman.');
+          'ATT-004',
+          'Lokasi penyimpanan tidak aman.',
+        );
       }
       if (!await recordDir.exists()) {
         await recordDir.create(recursive: true);
@@ -368,7 +424,9 @@ class AttachmentStorageService {
 
       if (!_isSafePath(targetPath, baseDir)) {
         throw const AttachmentException(
-            'ATT-004', 'Lokasi penyimpanan tidak aman.');
+          'ATT-004',
+          'Lokasi penyimpanan tidak aman.',
+        );
       }
 
       final savedFile = File(targetPath);
@@ -386,15 +444,18 @@ class AttachmentStorageService {
 
       return StoredAttachmentResult(
         localPath: targetPath,
-        fileName:
-            originalName.isNotEmpty ? originalName : 'Nota_$attachmentId$ext',
+        fileName: originalName.isNotEmpty
+            ? originalName
+            : 'Nota_$attachmentId$ext',
         mimeType: processResult.outputMimeType,
         fileSize: fileSize,
       );
     } catch (e) {
       if (e is AttachmentException) rethrow;
       throw const AttachmentException(
-          'ATT-003', 'Gagal menyalin foto ke penyimpanan.');
+        'ATT-003',
+        'Gagal menyalin foto ke penyimpanan.',
+      );
     }
   }
 
@@ -456,7 +517,8 @@ class AttachmentStorageService {
   }
 
   Future<AttachmentCleanupResult> deleteRecordAttachmentsDirectory(
-      String serviceRecordId) async {
+    String serviceRecordId,
+  ) async {
     try {
       final baseDir = await _getAttachmentsBaseDir();
       final recordDir = Directory(p.join(baseDir.path, serviceRecordId));
@@ -488,7 +550,8 @@ class AttachmentStorageService {
 
   /// Thread-safe wrapper for running orphan cleanup during startup/lifecycle.
   Future<AttachmentCleanupResult> runStartupOrphanCleanup(
-      Set<String> activePaths) async {
+    Set<String> activePaths,
+  ) async {
     if (_isCleanupRunning) return AttachmentCleanupResult.empty;
     _isCleanupRunning = true;
     try {
@@ -501,7 +564,8 @@ class AttachmentStorageService {
   /// Scans attachments directory and removes files that are not referenced in `activePaths`
   /// or corresponding active thumbnails. Also removes empty directories.
   Future<AttachmentCleanupResult> cleanupOrphanAttachments(
-      Set<String> activePaths) async {
+    Set<String> activePaths,
+  ) async {
     int deletedCount = 0;
     int failedCount = 0;
     final failedPaths = <String>[];
@@ -510,8 +574,9 @@ class AttachmentStorageService {
       final baseDir = await _getAttachmentsBaseDir();
       if (!await baseDir.exists()) return AttachmentCleanupResult.empty;
 
-      final normalizedActivePaths =
-          activePaths.map((pStr) => p.normalize(pStr)).toSet();
+      final normalizedActivePaths = activePaths
+          .map((pStr) => p.normalize(pStr))
+          .toSet();
 
       final entities = await baseDir.list(recursive: true).toList();
       for (final entity in entities) {
@@ -528,10 +593,13 @@ class AttachmentStorageService {
             final baseName = p.basenameWithoutExtension(normalized);
             final origBaseName = baseName.replaceAll('_thumb', '');
             final origExt = p.extension(normalized);
-            final expectedOrigPath =
-                p.join(p.dirname(normalized), '$origBaseName$origExt');
-            isThumbnailOfActive =
-                normalizedActivePaths.contains(p.normalize(expectedOrigPath));
+            final expectedOrigPath = p.join(
+              p.dirname(normalized),
+              '$origBaseName$origExt',
+            );
+            isThumbnailOfActive = normalizedActivePaths.contains(
+              p.normalize(expectedOrigPath),
+            );
           }
 
           if (!isDirectActive && !isThumbnailOfActive) {

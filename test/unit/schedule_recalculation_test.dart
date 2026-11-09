@@ -28,9 +28,7 @@ void main() {
   });
 
   group('Schedule Baseline and Recalculation Tests', () {
-    test(
-        'Schedule updates from service completion and restores manual baseline when service deleted',
-        () async {
+    test('Schedule updates from service completion and restores manual baseline when service deleted', () async {
       // 1. Create motorcycle
       final motorId = await motorcycleRepo.createMotorcycle(
         nickname: 'Vario Test',
@@ -69,7 +67,7 @@ void main() {
             'itemName': 'Ganti Oli Mesin',
             'itemCost': 65000,
             'maintenanceScheduleId': scheduleId,
-          }
+          },
         ],
       );
       final recordId = createResult.recordId;

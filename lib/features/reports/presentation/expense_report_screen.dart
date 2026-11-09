@@ -65,9 +65,7 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
     final reportAsync = ref.watch(expenseReportStreamProvider(filterParams));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Laporan Biaya Perawatan'),
-      ),
+      appBar: AppBar(title: const Text('Laporan Biaya Perawatan')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         child: Column(
@@ -84,8 +82,10 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                       initialValue: _selectedMotorcycleId,
                       decoration: const InputDecoration(
                         labelText: 'Filter Motor',
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                       ),
                       items: [
                         const DropdownMenuItem<String?>(
@@ -95,8 +95,9 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                         ...motorcycles.map((m) {
                           return DropdownMenuItem<String?>(
                             value: m.id,
-                            child:
-                                Text('${m.nickname} (${m.brand} ${m.model})'),
+                            child: Text(
+                              '${m.nickname} (${m.brand} ${m.model})',
+                            ),
                           );
                         }),
                       ],
@@ -121,11 +122,13 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                               children: [
                                 const Icon(Icons.date_range_rounded, size: 14),
                                 const SizedBox(width: 4),
-                                Text(_selectedPeriod == ReportPeriod.custom &&
-                                        _customStartDate != null &&
-                                        _customEndDate != null
-                                    ? '${AppFormatters.formatDateIndonesian(_customStartDate!)} - ${AppFormatters.formatDateIndonesian(_customEndDate!)}'
-                                    : 'Kustom'),
+                                Text(
+                                  _selectedPeriod == ReportPeriod.custom &&
+                                          _customStartDate != null &&
+                                          _customEndDate != null
+                                      ? '${AppFormatters.formatDateIndonesian(_customStartDate!)} - ${AppFormatters.formatDateIndonesian(_customEndDate!)}'
+                                      : 'Kustom',
+                                ),
                               ],
                             ),
                             selected: _selectedPeriod == ReportPeriod.custom,
@@ -161,8 +164,11 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                 child: Center(
                   child: Column(
                     children: [
-                      const Icon(Icons.error_outline_rounded,
-                          size: 48, color: AppColors.statusTerlambat),
+                      const Icon(
+                        Icons.error_outline_rounded,
+                        size: 48,
+                        color: AppColors.statusTerlambat,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         'Gagal memuat laporan: $err',
@@ -172,7 +178,8 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                       const SizedBox(height: 12),
                       ElevatedButton.icon(
                         onPressed: () => ref.invalidate(
-                            expenseReportStreamProvider(filterParams)),
+                          expenseReportStreamProvider(filterParams),
+                        ),
                         icon: const Icon(Icons.refresh_rounded),
                         label: const Text('Coba Lagi'),
                       ),
@@ -190,8 +197,7 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                         children: [
                           const EmptyIllustrationWidget(
                             title: 'Tidak Ada Transaksi',
-                            subtitle:
-                                'Belum ada catatan servis pada periode atau filter motor yang dipilih.',
+                            subtitle: 'Belum ada catatan servis pada periode atau filter motor yang dipilih.',
                             icon: Icons.bar_chart_rounded,
                           ),
                           const SizedBox(height: 12),
@@ -219,8 +225,10 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Total Pengeluaran Periode',
-                                    style: AppTypography.bodySmall),
+                                const Text(
+                                  'Total Pengeluaran Periode',
+                                  style: AppTypography.bodySmall,
+                                ),
                                 const SizedBox(height: 4),
                                 Text(
                                   AppFormatters.formatRupiah(summary.totalCost),
@@ -233,7 +241,9 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(10),
@@ -254,8 +264,10 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
 
                     // Monthly Chart
                     if (summary.monthlyExpenses.isNotEmpty) ...[
-                      const Text('Grafik Pengeluaran Bulanan',
-                          style: AppTypography.headlineSmall),
+                      const Text(
+                        'Grafik Pengeluaran Bulanan',
+                        style: AppTypography.headlineSmall,
+                      ),
                       const SizedBox(height: 10),
                       Card(
                         child: Padding(
@@ -271,8 +283,10 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
 
                     // Category Breakdown
                     if (summary.categoryBreakdown.isNotEmpty) ...[
-                      const Text('Rincian Kategori Pekerjaan',
-                          style: AppTypography.headlineSmall),
+                      const Text(
+                        'Rincian Kategori Pekerjaan',
+                        style: AppTypography.headlineSmall,
+                      ),
                       const SizedBox(height: 10),
                       Card(
                         child: Padding(
@@ -292,14 +306,16 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(cat.category,
-                                          style: AppTypography.titleSmall),
+                                      Text(
+                                        cat.category,
+                                        style: AppTypography.titleSmall,
+                                      ),
                                       Text(
                                         '${AppFormatters.formatRupiah(cat.totalCost)} (${cat.percentage.toStringAsFixed(1)}%)',
-                                        style:
-                                            AppTypography.bodyMedium.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                        style: AppTypography.bodyMedium
+                                            .copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -312,8 +328,8 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                                       backgroundColor: AppColors.surfaceVariant,
                                       valueColor:
                                           const AlwaysStoppedAnimation<Color>(
-                                        AppColors.primary,
-                                      ),
+                                            AppColors.primary,
+                                          ),
                                     ),
                                   ),
                                 ],
@@ -326,8 +342,10 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                     ],
 
                     // Transaction List
-                    const Text('Daftar Kunjungan Servis Terkait',
-                        style: AppTypography.headlineSmall),
+                    const Text(
+                      'Daftar Kunjungan Servis Terkait',
+                      style: AppTypography.headlineSmall,
+                    ),
                     const SizedBox(height: 10),
                     ListView.separated(
                       shrinkWrap: true,
@@ -340,8 +358,10 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                           child: ListTile(
                             onTap: () =>
                                 context.push('/service-records/${rec.id}'),
-                            title: Text(rec.itemsSummary,
-                                style: AppTypography.titleSmall),
+                            title: Text(
+                              rec.itemsSummary,
+                              style: AppTypography.titleSmall,
+                            ),
                             subtitle: Text(
                               '${AppFormatters.formatDateIndonesian(rec.serviceDate)} • ${AppFormatters.formatKm(rec.odometerKm)}',
                               style: AppTypography.bodySmall,
@@ -408,12 +428,15 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
         ),
         titlesData: FlTitlesData(
           show: true,
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          leftTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -425,7 +448,9 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                   child: Text(
                     monthly[idx].label,
                     style: const TextStyle(
-                        fontSize: 10, color: AppColors.textSecondary),
+                      fontSize: 10,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 );
               },
@@ -443,8 +468,9 @@ class _ExpenseReportScreenState extends ConsumerState<ExpenseReportScreen> {
                 toY: m.totalCost.toDouble(),
                 color: AppColors.primary,
                 width: 18,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(6)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(6),
+                ),
               ),
             ],
           );

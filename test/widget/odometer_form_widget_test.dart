@@ -7,8 +7,9 @@ import 'package:servis/database/app_database.dart';
 import 'package:servis/features/odometer/presentation/odometer_screen.dart';
 
 void main() {
-  testWidgets('OdometerScreen displays current reading and allows input',
-      (WidgetTester tester) async {
+  testWidgets('OdometerScreen displays current reading and allows input', (
+    WidgetTester tester,
+  ) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.0;
     addTearDown(() => tester.view.resetPhysicalSize());
@@ -17,12 +18,8 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          databaseProvider.overrideWithValue(db),
-        ],
-        child: const MaterialApp(
-          home: OdometerScreen(motorcycleId: 'm1'),
-        ),
+        overrides: [databaseProvider.overrideWithValue(db)],
+        child: const MaterialApp(home: OdometerScreen(motorcycleId: 'm1')),
       ),
     );
 

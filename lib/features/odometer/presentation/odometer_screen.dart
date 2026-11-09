@@ -13,10 +13,7 @@ import '../domain/odometer_reading.dart';
 class OdometerScreen extends ConsumerStatefulWidget {
   final String motorcycleId;
 
-  const OdometerScreen({
-    super.key,
-    required this.motorcycleId,
-  });
+  const OdometerScreen({super.key, required this.motorcycleId});
 
   @override
   ConsumerState<OdometerScreen> createState() => _OdometerScreenState();
@@ -49,8 +46,10 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
     }
   }
 
-  Future<void> _save(
-      {bool isCorrection = false, String? correctionReason}) async {
+  Future<void> _save({
+    bool isCorrection = false,
+    String? correctionReason,
+  }) async {
     if (!_formKey.currentState!.validate() && !isCorrection) return;
 
     final km = int.tryParse(_odometerController.text.trim());
@@ -85,7 +84,9 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
           .read(maintenanceRepositoryProvider)
           .getSchedules(widget.motorcycleId);
       if (motorcycle != null) {
-        await ref.read(notificationReconcilerProvider).reconcileForMotorcycle(
+        await ref
+            .read(notificationReconcilerProvider)
+            .reconcileForMotorcycle(
               motorcycle: motorcycle,
               schedules: schedules,
             );
@@ -102,8 +103,9 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.statusTerlambat),
+          content: Text(e.message),
+          backgroundColor: AppColors.statusTerlambat,
+        ),
       );
     } catch (_) {
       if (!mounted) return;
@@ -187,13 +189,12 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
         .watchReadings(widget.motorcycleId);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pembaruan Kilometer'),
-      ),
+      appBar: AppBar(title: const Text('Pembaruan Kilometer')),
       body: motorcyclesAsync.when(
         data: (list) {
-          final matches =
-              list.where((m) => m.id == widget.motorcycleId).toList();
+          final matches = list
+              .where((m) => m.id == widget.motorcycleId)
+              .toList();
           final motorcycle = matches.isNotEmpty ? matches.first : null;
 
           return SingleChildScrollView(
@@ -224,7 +225,8 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
                         ),
                         Text(
                           AppFormatters.formatKm(
-                              motorcycle?.currentOdometerKm ?? 0),
+                            motorcycle?.currentOdometerKm ?? 0,
+                          ),
                           style: AppTypography.displayLarge.copyWith(
                             color: AppColors.primary,
                             fontSize: 24,
@@ -275,31 +277,39 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 14, vertical: 14),
+                                      horizontal: 14,
+                                      vertical: 14,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: AppColors.surface,
                                       borderRadius: BorderRadius.circular(12),
-                                      border:
-                                          Border.all(color: AppColors.border),
+                                      border: Border.all(
+                                        color: AppColors.border,
+                                      ),
                                     ),
                                     child: Row(
                                       children: [
-                                        const Icon(Icons.calendar_today_rounded,
-                                            size: 18, color: AppColors.primary),
+                                        const Icon(
+                                          Icons.calendar_today_rounded,
+                                          size: 18,
+                                          color: AppColors.primary,
+                                        ),
                                         const SizedBox(width: 10),
                                         Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            const Text('Tanggal Pembacaan',
-                                                style: TextStyle(
-                                                    fontSize: 11,
-                                                    color:
-                                                        AppColors.textMuted)),
+                                            const Text(
+                                              'Tanggal Pembacaan',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: AppColors.textMuted,
+                                              ),
+                                            ),
                                             Text(
-                                              AppFormatters
-                                                  .formatDateIndonesian(
-                                                      _selectedDate),
+                                              AppFormatters.formatDateIndonesian(
+                                                _selectedDate,
+                                              ),
                                               style: AppTypography.titleSmall,
                                             ),
                                           ],
@@ -349,8 +359,9 @@ class _OdometerScreenState extends ConsumerState<OdometerScreen> {
                         child: Padding(
                           padding: EdgeInsets.all(20),
                           child: Center(
-                            child:
-                                Text('Belum ada riwayat pembacaan kilometer.'),
+                            child: Text(
+                              'Belum ada riwayat pembacaan kilometer.',
+                            ),
                           ),
                         ),
                       );

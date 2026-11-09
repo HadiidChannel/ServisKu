@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_typography.dart';
 
@@ -44,9 +45,7 @@ class ConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: AppColors.surface,
       surfaceTintColor: Colors.transparent,
       title: Row(
@@ -66,18 +65,10 @@ class ConfirmationDialog extends StatelessWidget {
             ),
             const SizedBox(width: 12),
           ],
-          Expanded(
-            child: Text(
-              title,
-              style: AppTypography.headlineSmall,
-            ),
-          ),
+          Expanded(child: Text(title, style: AppTypography.headlineSmall)),
         ],
       ),
-      content: Text(
-        message,
-        style: AppTypography.bodyMedium,
-      ),
+      content: Text(message, style: AppTypography.bodyMedium),
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       actions: [
         TextButton(
@@ -90,8 +81,9 @@ class ConfirmationDialog extends StatelessWidget {
         ElevatedButton(
           onPressed: onConfirm,
           style: ElevatedButton.styleFrom(
-            backgroundColor:
-                isDestructive ? AppColors.statusTerlambat : AppColors.primary,
+            backgroundColor: isDestructive
+                ? AppColors.statusTerlambat
+                : AppColors.primary,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
